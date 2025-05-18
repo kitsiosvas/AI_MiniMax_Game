@@ -6,7 +6,7 @@ public class Game {
     private final int rows;
     private final int columns;
     private char[][] board;
-    private int A_x, A_y, B_x, B_y;
+    private int playerAX, playerAY, playerBX, playerBY;
 
     public void print() {
         System.out.println("----------------------");
@@ -31,20 +31,20 @@ public class Game {
         }
     }
 
-    public Game(char[][] a) {
-        this.rows = a.length;
-        this.columns = a[0].length;
-        board = new char[rows][columns];
+    public Game(char[][] board) {
+        this.rows = board.length;
+        this.columns = board[0].length;
+        this.board = new char[rows][columns];
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < columns; j++) {
-                board[i][j] = a[i][j];
+                this.board[i][j] = board[i][j];
                 if (board[i][j] == 'A') {
-                    A_x = j;
-                    A_y = i;
+                    playerAX = j;
+                    playerAY = i;
                 }
                 if (board[i][j] == 'B') {
-                    B_x = j;
-                    B_y = i;
+                    playerBX = j;
+                    playerBY = i;
                 }
             }
         }
@@ -53,68 +53,68 @@ public class Game {
     public int getRows() { return rows; }
     public int getColumns() { return columns; }
 
-    public boolean setCell(int i, int j, char value) {
-        board[i][j] = value;
+    public boolean setBoardCell(int row, int col, char value) {
+        board[row][col] = value;
         return true;
     }
 
-    public char getCell(int i, int j) { return board[i][j]; }
+    public char getBoardCell(int row, int col) { return board[row][col]; }
 
     public char[][] getBoard() { return board; }
 
-    public void setBoard(char[][] a) {
-        board = new char[a.length][a[0].length];
+    public void setBoard(char[][] newBoard) {
+        board = new char[newBoard.length][newBoard[0].length];
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < columns; j++) {
-                board[i][j] = a[i][j];
+                board[i][j] = newBoard[i][j];
                 if (board[i][j] == 'A') {
-                    A_x = j;
-                    A_y = i;
+                    playerAX = j;
+                    playerAY = i;
                 }
                 if (board[i][j] == 'B') {
-                    B_x = j;
-                    B_y = i;
+                    playerBX = j;
+                    playerBY = i;
                 }
             }
         }
     }
 
-    public int getA_x() { return A_x; }
-    public int getA_y() { return A_y; }
-    public int getB_x() { return B_x; }
-    public int getB_y() { return B_y; }
+    public int getPlayerAX() { return playerAX; }
+    public int getPlayerAY() { return playerAY; }
+    public int getPlayerBX() { return playerBX; }
+    public int getPlayerBY() { return playerBY; }
 
-    void setPlayer1_positions(int x, int y) { A_x = x; A_y = y; }
-    void setPlayer2_positions(int x, int y) { B_x = x; B_y = y; }
+    void setPlayerAPosition(int x, int y) { playerAX = x; playerAY = y; }
+    void setPlayerBPosition(int x, int y) { playerBX = x; playerBY = y; }
 
-    public boolean move(Game child, int player, Direction dir, int squares, int x, int y) {
-        if (y < 0 || x < 0 || x >= columns || y >= rows) return false;
-        char c = (player == 1) ? 'A' : 'B';
+    public boolean makeMove(Game child, int player, Direction direction, int moveLength, int currentX, int currentY) {
+        if (currentY < 0 || currentX < 0 || currentX >= columns || currentY >= rows) return false;
+        char playerChar = (player == 1) ? 'A' : 'B';
 
-        if (board[y][x] != ' ' && board[y][x] != c) {
+        if (board[currentY][currentX] != ' ' && board[currentY][currentX] != playerChar) {
             return false;
         }
 
-        if (squares == 0) {
+        if (moveLength == 0) {
             for (int i = 0; i < rows; i++) {
                 for (int j = 0; j < columns; j++) {
-                    child.setCell(i, j, board[i][j]);
+                    child.setBoardCell(i, j, board[i][j]);
                 }
             }
             if (player == 1) {
-                child.setPlayer2_positions(this.getB_x(), this.getB_y());
-                child.setPlayer1_positions(x, y);
-                child.setCell(y, x, 'A');
+                child.setPlayerBPosition(this.getPlayerBX(), this.getPlayerBY());
+                child.setPlayerAPosition(currentX, currentY);
+                child.setBoardCell(currentY, currentX, 'A');
             } else {
-                child.setPlayer1_positions(this.getA_x(), this.getA_y());
-                child.setPlayer2_positions(x, y);
-                child.setCell(y, x, 'B');
+                child.setPlayerAPosition(this.getPlayerAX(), this.getPlayerAY());
+                child.setPlayerBPosition(currentX, currentY);
+                child.setBoardCell(currentY, currentX, 'B');
             }
             return true;
         }
 
-        if (move(child, player, dir, squares - 1, x + dir.getDx(), y + dir.getDy())) {
-            child.setCell(y, x, '*');
+        if (makeMove(child, player, direction, moveLength - 1, currentX + direction.getDx(), currentY + direction.getDy())) {
+            child.setBoardCell(currentY, currentX, '*');
             return true;
         }
         return false;
@@ -122,18 +122,18 @@ public class Game {
 
     public List<Game> expand(int player) {
         List<Game> children = new ArrayList<>();
-        int x, y;
+        int currentX, currentY;
         if (player == 1) {
-            x = A_x;
-            y = A_y;
+            currentX = playerAX;
+            currentY = playerAY;
         } else {
-            x = B_x;
-            y = B_y;
+            currentX = playerBX;
+            currentY = playerBY;
         }
-        for (Direction dir : Direction.values()) {
+        for (Direction direction : Direction.values()) {
             for (int i = 1; i <= move_limit; i++) {
                 Game child = new Game(this.getRows(), this.getColumns());
-                if (move(child, player, dir, i, x, y)) {
+                if (makeMove(child, player, direction, i, currentX, currentY)) {
                     children.add(child);
                 }
             }
