@@ -1,19 +1,3 @@
-/*
-Για το παιχνίδι έχει γίνει η υπόθεση ότι τα πιόνια μπορούν να κάνουν κινήσεις με μέγιστο μήκος 2.
-Για να αλλάξει αυτό θα πρέπει να αλλάξει η μεταβλητή move_limit της κλάσης Game.java .
-
-
-Διαθέσιμες κινήσεις(όπου i είναι το μήκος, δηλαδη πρέπει 0<i<move_limit):
-up i
-down i
-left i
-right i
-up_right i
-up_left i
-down_right i
-down_left i
- */
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -55,7 +39,7 @@ public class Main {
     public static void main(String[] args)
     {
         int rows, columns;
-        int x1 = -1, y1 = -1, x2 = -1, y2 = -1; // Fix: Initialize to -1
+        int x1 = -1, y1 = -1, x2 = -1, y2 = -1;
         char[][] a;
 
         try (Scanner sc = new Scanner(System.in)) {
@@ -128,7 +112,6 @@ public class Main {
                 }
             } while (condition);
 
-            // Fix: Verify coordinates before using
             if (x1 < 0 || y1 < 0 || x2 < 0 || y2 < 0 || 
                 x1 >= columns || y1 >= rows || x2 >= columns || y2 >= rows) {
                 System.out.println("Error: Player coordinates not properly set.");
@@ -140,7 +123,7 @@ public class Main {
 
             Game start = new Game(a), best = new Game(rows, columns);
             int v, exp, len;
-            String dir;
+            Direction dir;
 
             System.out.println("STARTING POSITION:");
             start.print();
@@ -156,11 +139,10 @@ public class Main {
                     do {
                         try {
                             System.out.println("Give direction and move length of your move: (e.g \"up_right 2\" to go up and then right 2 squares) ");
-                            dir = sc.next();
+                            String dirInput = sc.next();
+                            dir = Direction.fromString(dirInput);
                             len = sc.nextInt();
-                            if (!(dir.equals("up") || dir.equals("right") || dir.equals("down") || 
-                                  dir.equals("left") || dir.equals("up_left") || dir.equals("up_right") || 
-                                  dir.equals("down_left") || dir.equals("down_right")) || len <= 0 || len > Game.move_limit) {
+                            if (dir == null || len <= 0 || len > Game.move_limit) {
                                 System.out.println("Invalid direction or length. Try again.");
                                 continue;
                             }
@@ -171,70 +153,12 @@ public class Main {
                         }
                     } while (true);
 
-                    if (dir.equals("up"))
+                    if (!start.move(start, 2, dir, len, start.getB_x(), start.getB_y()))
                     {
-                        if (!start.goUp(start, 2, len, start.getB_x(), start.getB_y()))
-                        {
-                            System.out.println("Invalid move. Game ended.");
-                            break;
-                        }
+                        System.out.println("Invalid move. Game ended.");
+                        break;
                     }
-                    else if (dir.equals("right"))
-                    {
-                        if (!start.goRight(start, 2, len, start.getB_x(), start.getB_y()))
-                        {
-                            System.out.println("Invalid move. Game ended.");
-                            break;
-                        }
-                    }
-                    else if (dir.equals("down"))
-                    {
-                        if (!start.goDown(start, 2, len, start.getB_x(), start.getB_y()))
-                        {
-                            System.out.println("Invalid move. Game ended.");
-                            break;
-                        }
-                    }
-                    else if (dir.equals("left"))
-                    {
-                        if (!start.goLeft(start, 2, len, start.getB_x(), start.getB_y()))
-                        {
-                            System.out.println("Invalid move. Game ended.");
-                            break;
-                        }
-                    }
-                    else if (dir.equals("up_left"))
-                    {
-                        if (!start.goUp_Left(start, 2, len, start.getB_x(), start.getB_y()))
-                        {
-                            System.out.println("Invalid move. Game ended.");
-                            break;
-                        }
-                    }
-                    else if (dir.equals("up_right"))
-                    {
-                        if (!start.goUp_Right(start, 2, len, start.getB_x(), start.getB_y()))
-                        {
-                            System.out.println("Invalid move. Game ended.");
-                            break;
-                        }
-                    }
-                    else if (dir.equals("down_left"))
-                    {
-                        if (!start.goDown_Left(start, 2, len, start.getB_x(), start.getB_y()))
-                        {
-                            System.out.println("Invalid move. Game ended.");
-                            break;
-                        }
-                    }
-                    else if (dir.equals("down_right"))
-                    {
-                        if (!start.goDown_Right(start, 2, len, start.getB_x(), start.getB_y()))
-                        {
-                            System.out.println("Invalid move. Game ended.");
-                            break;
-                        }
-                    }
+
                     v = start.evaluate(1);
                     start.print();
                 }

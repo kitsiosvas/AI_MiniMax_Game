@@ -87,7 +87,7 @@ public class Game {
     void setPlayer1_positions(int x, int y) { A_x = x; A_y = y; }
     void setPlayer2_positions(int x, int y) { B_x = x; B_y = y; }
 
-    public boolean goUp(Game child, int player, int squares, int x, int y) {
+    public boolean move(Game child, int player, Direction dir, int squares, int x, int y) {
         if (y < 0 || x < 0 || x >= columns || y >= rows) return false;
         char c = (player == 1) ? 'A' : 'B';
 
@@ -113,246 +113,15 @@ public class Game {
             return true;
         }
 
-        if (goUp(child, player, squares - 1, x, y - 1)) {
+        if (move(child, player, dir, squares - 1, x + dir.getDx(), y + dir.getDy())) {
             child.setCell(y, x, '*');
             return true;
         }
         return false;
     }
 
-    public boolean goDown(Game child, int player, int squares, int x, int y) {
-        if (y < 0 || x < 0 || x >= columns || y >= rows) return false;
-        char c = (player == 1) ? 'A' : 'B';
-
-        if (board[y][x] != ' ' && board[y][x] != c) {
-            return false;
-        }
-
-        if (squares == 0) {
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < columns; j++) {
-                    child.setCell(i, j, board[i][j]);
-                }
-            }
-            if (player == 1) {
-                child.setPlayer2_positions(this.getB_x(), this.getB_y());
-                child.setPlayer1_positions(x, y);
-                child.setCell(y, x, 'A');
-            } else {
-                child.setPlayer1_positions(this.getA_x(), this.getA_y());
-                child.setPlayer2_positions(x, y);
-                child.setCell(y, x, 'B');
-            }
-            return true;
-        }
-
-        if (goDown(child, player, squares - 1, x, y + 1)) {
-            child.setCell(y, x, '*');
-            return true;
-        }
-        return false;
-    }
-
-    public boolean goRight(Game child, int player, int squares, int x, int y) {
-        if (y < 0 || x < 0 || x >= columns || y >= rows) return false;
-        char c = (player == 1) ? 'A' : 'B';
-
-        if (board[y][x] != ' ' && board[y][x] != c) {
-            return false;
-        }
-
-        if (squares == 0) {
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < columns; j++) {
-                    child.setCell(i, j, board[i][j]);
-                }
-            }
-            if (player == 1) {
-                child.setPlayer2_positions(this.getB_x(), this.getB_y());
-                child.setPlayer1_positions(x, y);
-                child.setCell(y, x, 'A');
-            } else {
-                child.setPlayer1_positions(this.getA_x(), this.getA_y());
-                child.setPlayer2_positions(x, y);
-                child.setCell(y, x, 'B');
-            }
-            return true;
-        }
-
-        if (goRight(child, player, squares - 1, x + 1, y)) {
-            child.setCell(y, x, '*');
-            return true;
-        }
-        return false;
-    }
-
-    public boolean goLeft(Game child, int player, int squares, int x, int y) {
-        if (y < 0 || x < 0 || x >= columns || y >= rows) return false;
-        char c = (player == 1) ? 'A' : 'B';
-
-        if (board[y][x] != ' ' && board[y][x] != c) {
-            return false;
-        }
-
-        if (squares == 0) {
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < columns; j++) {
-                    child.setCell(i, j, board[i][j]);
-                }
-            }
-            if (player == 1) {
-                child.setPlayer2_positions(this.getB_x(), this.getB_y());
-                child.setPlayer1_positions(x, y);
-                child.setCell(y, x, 'A');
-            } else {
-                child.setPlayer1_positions(this.getA_x(), this.getA_y());
-                child.setPlayer2_positions(x, y);
-                child.setCell(y, x, 'B');
-            }
-            return true;
-        }
-
-        if (goLeft(child, player, squares - 1, x - 1, y)) {
-            child.setCell(y, x, '*');
-            return true;
-        }
-        return false;
-    }
-
-    public boolean goUp_Right(Game child, int player, int squares, int x, int y) {
-        if (y < 0 || x < 0 || x >= columns || y >= rows) return false;
-        char c = (player == 1) ? 'A' : 'B';
-
-        if (board[y][x] != ' ' && board[y][x] != c) {
-            return false;
-        }
-
-        if (squares == 0) {
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < columns; j++) {
-                    child.setCell(i, j, board[i][j]);
-                }
-            }
-            if (player == 1) {
-                child.setPlayer2_positions(this.getB_x(), this.getB_y());
-                child.setPlayer1_positions(x, y);
-                child.setCell(y, x, 'A');
-            } else {
-                child.setPlayer1_positions(this.getA_x(), this.getA_y());
-                child.setPlayer2_positions(x, y);
-                child.setCell(y, x, 'B');
-            }
-            return true;
-        }
-
-        if (goUp_Right(child, player, squares - 1, x + 1, y - 1)) {
-            child.setCell(y, x, '*');
-            return true;
-        }
-        return false;
-    }
-
-    public boolean goDown_Right(Game child, int player, int squares, int x, int y) {
-        if (y < 0 || x < 0 || x >= columns || y >= rows) return false;
-        char c = (player == 1) ? 'A' : 'B';
-
-        if (board[y][x] != ' ' && board[y][x] != c) {
-            return false;
-        }
-
-        if (squares == 0) {
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < columns; j++) {
-                    child.setCell(i, j, board[i][j]);
-                }
-            }
-            if (player == 1) {
-                child.setPlayer2_positions(this.getB_x(), this.getB_y());
-                child.setPlayer1_positions(x, y);
-                child.setCell(y, x, 'A');
-            } else {
-                child.setPlayer1_positions(this.getA_x(), this.getA_y());
-                child.setPlayer2_positions(x, y);
-                child.setCell(y, x, 'B');
-            }
-            return true;
-        }
-
-        if (goDown_Right(child, player, squares - 1, x + 1, y + 1)) {
-            child.setCell(y, x, '*');
-            return true;
-        }
-        return false;
-    }
-
-    public boolean goUp_Left(Game child, int player, int squares, int x, int y) {
-        if (y < 0 || x < 0 || x >= columns || y >= rows) return false;
-        char c = (player == 1) ? 'A' : 'B';
-
-        if (board[y][x] != ' ' && board[y][x] != c) {
-            return false;
-        }
-
-        if (squares == 0) {
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < columns; j++) {
-                    child.setCell(i, j, board[i][j]);
-                }
-            }
-            if (player == 1) {
-                child.setPlayer2_positions(this.getB_x(), this.getB_y());
-                child.setPlayer1_positions(x, y);
-                child.setCell(y, x, 'A');
-            } else {
-                child.setPlayer1_positions(this.getA_x(), this.getA_y());
-                child.setPlayer2_positions(x, y);
-                child.setCell(y, x, 'B');
-            }
-            return true;
-        }
-
-        if (goUp_Left(child, player, squares - 1, x - 1, y - 1)) {
-            child.setCell(y, x, '*');
-            return true;
-        }
-        return false;
-    }
-
-    public boolean goDown_Left(Game child, int player, int squares, int x, int y) {
-        if (y < 0 || x < 0 || x >= columns || y >= rows) return false;
-        char c = (player == 1) ? 'A' : 'B';
-
-        if (board[y][x] != ' ' && board[y][x] != c) {
-            return false;
-        }
-
-        if (squares == 0) {
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < columns; j++) {
-                    child.setCell(i, j, board[i][j]);
-                }
-            }
-            if (player == 1) {
-                child.setPlayer2_positions(this.getB_x(), this.getB_y());
-                child.setPlayer1_positions(x, y);
-                child.setCell(y, x, 'A');
-            } else {
-                child.setPlayer1_positions(this.getA_x(), this.getA_y());
-                child.setPlayer2_positions(x, y);
-                child.setCell(y, x, 'B');
-            }
-            return true;
-        }
-
-        if (goDown_Left(child, player, squares - 1, x - 1, y + 1)) {
-            child.setCell(y, x, '*');
-            return true;
-        }
-        return false;
-    }
-
-    public List<Game> expand(int player) { // Modernized: Vector -> List
-        List<Game> children = new ArrayList<>(); // Modernized: ArrayList with generics
+    public List<Game> expand(int player) {
+        List<Game> children = new ArrayList<>();
         int x, y;
         if (player == 1) {
             x = A_x;
@@ -361,48 +130,14 @@ public class Game {
             x = B_x;
             y = B_y;
         }
-        for (int i = 1; i <= move_limit; i++) {
-            Game child = new Game(this.getRows(), this.getColumns());
-            if (goUp(child, player, i, x, y)) {
-                children.add(child);
-            }
-
-            child = new Game(this.getRows(), this.getColumns());
-            if (goDown(child, player, i, x, y)) {
-                children.add(child);
-            }
-
-            child = new Game(this.getRows(), this.getColumns());
-            if (goLeft(child, player, i, x, y)) {
-                children.add(child);
-            }
-
-            child = new Game(this.getRows(), this.getColumns());
-            if (goRight(child, player, i, x, y)) {
-                children.add(child);
-            }
-
-            child = new Game(this.getRows(), this.getColumns());
-            if (goUp_Right(child, player, i, x, y)) {
-                children.add(child);
-            }
-
-            child = new Game(this.getRows(), this.getColumns());
-            if (goUp_Left(child, player, i, x, y)) {
-                children.add(child);
-            }
-
-            child = new Game(this.getRows(), this.getColumns());
-            if (goDown_Right(child, player, i, x, y)) {
-                children.add(child);
-            }
-
-            child = new Game(this.getRows(), this.getColumns());
-            if (goDown_Left(child, player, i, x, y)) {
-                children.add(child);
+        for (Direction dir : Direction.values()) {
+            for (int i = 1; i <= move_limit; i++) {
+                Game child = new Game(this.getRows(), this.getColumns());
+                if (move(child, player, dir, i, x, y)) {
+                    children.add(child);
+                }
             }
         }
-
         return children;
     }
 
