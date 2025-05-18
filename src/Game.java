@@ -9,15 +9,19 @@ public class Game {
     private int playerAX, playerAY, playerBX, playerBY;
 
     public void print() {
-        System.out.println("----------------------");
+        System.out.print("  ");
+        for (int j = 0; j < columns; j++) {
+            System.out.print(j + " ");
+        }
+        System.out.println();
+
         for (int i = 0; i < rows; i++) {
-            System.out.print('|');
+            System.out.print(i + "|");
             for (int j = 0; j < columns; j++) {
                 System.out.print(board[i][j] + "|");
             }
             System.out.println();
         }
-        System.out.println("----------------------");
     }
 
     public Game(int rows, int columns) {
