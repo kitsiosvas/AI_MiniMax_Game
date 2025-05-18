@@ -30,7 +30,7 @@ public class Main {
         }
 
         int max, temp;
-        Game maxState = new Game(), tempState = new Game();
+        Game maxState = new Game(s.getRows(), s.getColumns()), tempState = new Game(s.getRows(), s.getColumns());
 
         Vector<Game> children = s.expand(isMax?1:2);
 
@@ -59,11 +59,12 @@ public class Main {
         char[][] a;
         Scanner sc = new Scanner(System.in);
 
+        System.out.println("== Java program started ==");
+
         System.out.println("Give number of rows and columns: ");
         System.out.println("NOTE! For board size larger than 4x4 " +
                 "the program might take a while to calculate the first move.");
         rows = sc.nextInt(); columns = sc.nextInt();
-        Game.rows = rows; Game.columns = columns;
         a = new char[rows][columns];
 
         for (int i=0;i<rows;i++) {
@@ -85,10 +86,10 @@ public class Main {
         }
         boolean condition;
         do {
-            System.out.println("Give i and j of player A");
+            System.out.println("Give i and j of player A (Computer)");
             y1 = sc.nextInt(); x1 = sc.nextInt();
 
-            System.out.println("Give i and j of player B");
+            System.out.println("Give i and j of player B (You)");
             y2 = sc.nextInt(); x2 = sc.nextInt();
 
             condition = !(x1>=0 & y1>=0 & x2>=0 & y2>=0 & y1<rows & y2<rows & x1<columns & x2<columns);
@@ -99,7 +100,7 @@ public class Main {
         }while (condition);
         a[y1][x1] = 'A'; a[y2][x2] = 'B';
 
-        Game start = new Game(a), best = new Game();
+        Game start = new Game(a), best = new Game(rows, columns);
         int v, exp, len;
         String dir;
 
@@ -198,5 +199,6 @@ public class Main {
             System.out.println("Tie!");
         else if (v==-1)
             System.out.println("You win!");
+        sc.close();
     }
 }

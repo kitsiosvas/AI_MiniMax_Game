@@ -1,9 +1,8 @@
-import java.security.PublicKey;
 import java.util.Vector;
 
 public class Game {
     public static int move_limit = 2;
-    public static int rows,columns;
+    private int rows,columns;
     private char[][] board = new char[rows][columns];
     private int A_x, A_y, B_x, B_y;
 
@@ -22,22 +21,27 @@ public class Game {
         System.out.println("----------------------");
     }
 
-    public Game(){
-        for (int i=0;i<rows;i++)
-            for (int j=0;j<columns;j++)
-                board[i][j] = ' ';
-    }
-    public Game(char[][] a)
-    {
+    public Game(int rows, int columns) {
+        this.rows = rows;
+        this.columns = columns;
+        board = new char[rows][columns];
         for (int i=0; i<rows; i++) {
-            for (int j = 0; j < columns; j++) {
-                board[i][j] = (char) a[i][j];
-                if (board[i][j] == 'A')
-                {
+            for (int j=0; j<columns; j++) {
+                board[i][j] = ' ';
+            }
+        }
+    }
+    public Game(char[][] a) {
+        this.rows = a.length;
+        this.columns = a[0].length;
+        board = new char[rows][columns];
+        for (int i=0; i<rows; i++) {
+            for (int j=0; j<columns; j++) {
+                board[i][j] = a[i][j];
+                if (board[i][j] == 'A') {
                     A_x = j; A_y = i;
                 }
-                if (board[i][j] == 'B')
-                {
+                if (board[i][j] == 'B') {
                     B_x = j; B_y = i;
                 }
             }
@@ -45,9 +49,7 @@ public class Game {
     }
 
     public int getRows() { return rows; }
-    public void setRows(int r) { rows = r; }
     public int getColumns() { return columns; }
-    public void setColumns(int c) { columns = c; }
 
     public boolean setCell(int i, int j, char value)
     {
@@ -58,17 +60,17 @@ public class Game {
     public char getCell(int i, int j) { return board[i][j]; }
 
     public char[][] getBoard() { return board; }
-    public void setBoard(char a[][])
-    {
+    public void setBoard(char[][] a) {
+        this.rows = a.length;
+        this.columns = a[0].length;
+        board = new char[rows][columns];
         for (int i=0; i<rows; i++) {
-            for (int j = 0; j < columns; j++) {
-                board[i][j] = (char) a[i][j];
-                if (board[i][j] == 'A')
-                {
+            for (int j=0; j<columns; j++) {
+                board[i][j] = a[i][j];
+                if (board[i][j] == 'A') {
                     A_x = j; A_y = i;
                 }
-                if (board[i][j] == 'B')
-                {
+                if (board[i][j] == 'B') {
                     B_x = j; B_y = i;
                 }
             }
@@ -434,48 +436,48 @@ public class Game {
         }
         for (int i=1;i<=move_limit;i++)
         {
-            Game child = new Game();
+            Game child = new Game(this.getRows(), this.getColumns());
             if (goUp(child, player, i, x, y))
             {
                 children.add(child);
             }
 
-            child = new Game();
+            child = new Game(this.getRows(), this.getColumns());
             if (goDown(child, player, i, x, y))
             {
                 children.add(child);
             }
 
-            child = new Game();
+            child = new Game(this.getRows(), this.getColumns());
             if (goLeft(child, player, i, x, y))
             {
                 children.add(child);
             }
 
-            child = new Game();
+            child = new Game(this.getRows(), this.getColumns());
             if (goRight(child, player, i, x, y))
             {
                 children.add(child);
             }
-            child = new Game();
+            child = new Game(this.getRows(), this.getColumns());
             if (goUp_Right(child, player, i, x, y))
             {
                 children.add(child);
             }
 
-            child = new Game();
+            child = new Game(this.getRows(), this.getColumns());
             if (goUp_Left(child, player, i, x, y))
             {
                 children.add(child);
             }
 
-            child = new Game();
+            child = new Game(this.getRows(), this.getColumns());
             if (goDown_Right(child, player, i, x, y))
             {
                 children.add(child);
             }
 
-            child = new Game();
+            child = new Game(this.getRows(), this.getColumns());
             if (goDown_Left(child, player, i, x, y))
             {
                 children.add(child);
