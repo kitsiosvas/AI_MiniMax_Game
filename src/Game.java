@@ -496,16 +496,6 @@ public class Game {
             if (expand(2).size()==0)
                 return 1;
         return -100;
-        /*
-        if( (expand(1).size()==0) & (expand(2).size()==0) )
-            return 0;
-        if (expand(1).size()==0)
-            return -1;
-        if (expand(2).size()==0)
-            return 1;
-        return -100;
-
-         */
     }
 
 }
