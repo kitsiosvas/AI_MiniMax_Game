@@ -4,30 +4,26 @@ import java.util.InputMismatchException;
 
 public class Main {
 
-    public static int minimax(Game state, int depth, boolean isMax, Game bestState)
-    {
-        int evaluationResult = state.evaluate(isMax ? 1 : 2);
+    public static int minimax(BoardState state, int depth, boolean isMax, BoardState bestState, GameLogic logic) {
+        int evaluationResult = logic.evaluate(state, isMax ? 1 : 2);
 
-        if (depth == 0 || evaluationResult != -100)
-        {
+        if (depth == 0 || evaluationResult != -100) {
             bestState.setBoard(state.getBoard());
             return evaluationResult;
         }
 
         int maxScore, tempScore;
-        Game maxState = new Game(state.getRows(), state.getColumns());
-        Game tempState = new Game(state.getRows(), state.getColumns());
+        BoardState maxState = new BoardState(state.getRows(), state.getColumns());
+        BoardState tempState = new BoardState(state.getRows(), state.getColumns());
 
-        List<Game> children = state.expand(isMax ? 1 : 2);
+        List<BoardState> children = logic.expand(state, isMax ? 1 : 2);
 
-        maxScore = minimax(children.get(0), depth - 1, !isMax, maxState);
+        maxScore = minimax(children.get(0), depth - 1, !isMax, maxState, logic);
         maxState = children.get(0);
 
-        for (int i = 1; i < children.size(); i++)
-        {
-            tempScore = minimax(children.get(i), depth - 1, !isMax, tempState);
-            if ((tempScore > maxScore) == isMax)
-            {
+        for (int i = 1; i < children.size(); i++) {
+            tempScore = minimax(children.get(i), depth - 1, !isMax, tempState, logic);
+            if ((tempScore > maxScore) == isMax) {
                 maxScore = tempScore;
                 maxState = children.get(i);
             }
@@ -36,8 +32,7 @@ public class Main {
         return maxScore;
     }
 
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
         int rows, columns;
         int playerAX = -1, playerAY = -1, playerBX = -1, playerBY = -1;
         char[][] board;
@@ -61,7 +56,6 @@ public class Main {
             }
 
             board = new char[rows][columns];
-
             for (int i = 0; i < rows; i++) {
                 for (int j = 0; j < columns; j++)
                     board[i][j] = ' ';
@@ -69,8 +63,7 @@ public class Main {
 
             System.out.println("Do you want to set any black squares on the board? Type \"yes\" for positive or anything else for negative ");
             String setBlackSquares = scanner.next();
-            while (setBlackSquares.equals("yes"))
-            {
+            while (setBlackSquares.equals("yes")) {
                 try {
                     System.out.println("Give i and j of the black square");
                     int row = scanner.nextInt();
@@ -100,7 +93,7 @@ public class Main {
                     playerBY = scanner.nextInt();
                     playerBX = scanner.nextInt();
 
-                    invalidInput = !(playerAX >= 0 && playerAY >= 0 && playerBX >= 0 && playerBY >= 0 && 
+                    invalidInput = !(playerAX >= 0 && playerAY >= 0 && playerBX >= 0 && playerBY >= 0 &&
                                      playerAY < rows && playerBY < rows && playerAX < columns && playerBX < columns);
                     if (invalidInput) {
                         System.out.println("Wrong input for at least one of the players. Try again:");
@@ -112,7 +105,7 @@ public class Main {
                 }
             } while (invalidInput);
 
-            if (playerAX < 0 || playerAY < 0 || playerBX < 0 || playerBY < 0 || 
+            if (playerAX < 0 || playerAY < 0 || playerBX < 0 || playerBY < 0 ||
                 playerAX >= columns || playerAY >= rows || playerBX >= columns || playerBY >= rows) {
                 System.out.println("Error: Player coordinates not properly set.");
                 return;
@@ -121,7 +114,9 @@ public class Main {
             board[playerAY][playerAX] = 'A';
             board[playerBY][playerBX] = 'B';
 
-            Game currentState = new Game(board), bestState = new Game(rows, columns);
+            BoardState currentState = new BoardState(board);
+            BoardState bestState = new BoardState(rows, columns);
+            GameLogic logic = new GameLogic();
             int evaluationResult, minimaxScore, moveLength;
             Direction moveDirection;
 
@@ -130,19 +125,18 @@ public class Main {
 
             do {
                 System.out.println("Calculating my move...");
-                minimaxScore = minimax(currentState, 10, true, bestState);
+                minimaxScore = minimax(currentState, 10, true, bestState, logic);
                 currentState = bestState;
                 currentState.print();
-                evaluationResult = currentState.evaluate(2);
-                if (evaluationResult == -100)
-                {
+                evaluationResult = logic.evaluate(currentState, 2);
+                if (evaluationResult == -100) {
                     do {
                         try {
                             System.out.println("Give direction and move length of your move: (e.g \"up_right 2\" to go up and then right 2 squares) ");
                             String directionInput = scanner.next();
                             moveDirection = Direction.fromString(directionInput);
                             moveLength = scanner.nextInt();
-                            if (moveDirection == null || moveLength <= 0 || moveLength > Game.move_limit) {
+                            if (moveDirection == null || moveLength <= 0 || moveLength > GameLogic.MOVE_LIMIT) {
                                 System.out.println("Invalid direction or length. Try again.");
                                 continue;
                             }
@@ -153,8 +147,8 @@ public class Main {
                         }
                     } while (true);
 
-                    Game tempState = new Game(currentState.getBoard());
-                    MoveResult moveResult = currentState.makeMove(tempState, 2, moveDirection, moveLength, currentState.getPlayerBX(), currentState.getPlayerBY());
+                    BoardState tempState = new BoardState(currentState.getBoard());
+                    MoveResult moveResult = logic.makeMove(currentState, tempState, 2, moveDirection, moveLength, currentState.getPlayerBX(), currentState.getPlayerBY());
                     if (moveResult != MoveResult.SUCCESS) {
                         int failureX = tempState.getFailureX();
                         int failureY = tempState.getFailureY();
@@ -165,7 +159,7 @@ public class Main {
                     }
                     currentState = tempState;
 
-                    evaluationResult = currentState.evaluate(1);
+                    evaluationResult = logic.evaluate(currentState, 1);
                     currentState.print();
                 }
             } while (evaluationResult == -100);
