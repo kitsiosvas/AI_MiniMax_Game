@@ -153,11 +153,17 @@ public class Main {
                         }
                     } while (true);
 
-                    if (!currentState.makeMove(currentState, 2, moveDirection, moveLength, currentState.getPlayerBX(), currentState.getPlayerBY()))
-                    {
-                        System.out.println("Invalid move. Game ended.");
+                    Game tempState = new Game(currentState.getBoard());
+                    MoveResult moveResult = currentState.makeMove(tempState, 2, moveDirection, moveLength, currentState.getPlayerBX(), currentState.getPlayerBY());
+                    if (moveResult != MoveResult.SUCCESS) {
+                        int failureX = tempState.getFailureX();
+                        int failureY = tempState.getFailureY();
+                        System.out.printf("Cannot move %s %d: %s %s (%d,%d). Game ended.%n",
+                            moveDirection.toString().toLowerCase(), moveLength,
+                            moveResult.getMessage(), moveResult.getPreposition(), failureY, failureX);
                         break;
                     }
+                    currentState = tempState;
 
                     evaluationResult = currentState.evaluate(1);
                     currentState.print();

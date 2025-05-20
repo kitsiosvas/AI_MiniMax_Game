@@ -7,6 +7,7 @@ public class Game {
     private final int columns;
     private char[][] board;
     private int playerAX, playerAY, playerBX, playerBY;
+    private int failureX, failureY;
 
     public void print() {
         System.out.print("  ");
@@ -33,6 +34,8 @@ public class Game {
                 board[i][j] = ' ';
             }
         }
+        failureX = -1;
+        failureY = -1;
     }
 
     public Game(char[][] board) {
@@ -52,6 +55,8 @@ public class Game {
                 }
             }
         }
+        failureX = -1;
+        failureY = -1;
     }
 
     public int getRows() { return rows; }
@@ -81,6 +86,8 @@ public class Game {
                 }
             }
         }
+        failureX = -1;
+        failureY = -1;
     }
 
     public int getPlayerAX() { return playerAX; }
@@ -88,15 +95,24 @@ public class Game {
     public int getPlayerBX() { return playerBX; }
     public int getPlayerBY() { return playerBY; }
 
+    public int getFailureX() { return failureX; }
+    public int getFailureY() { return failureY; }
+
     void setPlayerAPosition(int x, int y) { playerAX = x; playerAY = y; }
     void setPlayerBPosition(int x, int y) { playerBX = x; playerBY = y; }
 
-    public boolean makeMove(Game child, int player, Direction direction, int moveLength, int currentX, int currentY) {
-        if (currentY < 0 || currentX < 0 || currentX >= columns || currentY >= rows) return false;
+    public MoveResult makeMove(Game child, int player, Direction direction, int moveLength, int currentX, int currentY) {
+        if (currentY < 0 || currentX < 0 || currentX >= columns || currentY >= rows) {
+            child.failureX = currentX;
+            child.failureY = currentY;
+            return MoveResult.OUT_OF_BOUNDS;
+        }
         char playerChar = (player == 1) ? 'A' : 'B';
 
         if (board[currentY][currentX] != ' ' && board[currentY][currentX] != playerChar) {
-            return false;
+            child.failureX = currentX;
+            child.failureY = currentY;
+            return board[currentY][currentX] == '*' ? MoveResult.HIT_OBSTACLE : MoveResult.HIT_OPPONENT;
         }
 
         if (moveLength == 0) {
@@ -114,14 +130,16 @@ public class Game {
                 child.setPlayerBPosition(currentX, currentY);
                 child.setBoardCell(currentY, currentX, 'B');
             }
-            return true;
+            child.failureX = -1;
+            child.failureY = -1;
+            return MoveResult.SUCCESS;
         }
 
-        if (makeMove(child, player, direction, moveLength - 1, currentX + direction.getDx(), currentY + direction.getDy())) {
+        MoveResult result = makeMove(child, player, direction, moveLength - 1, currentX + direction.getDx(), currentY + direction.getDy());
+        if (result == MoveResult.SUCCESS) {
             child.setBoardCell(currentY, currentX, '*');
-            return true;
         }
-        return false;
+        return result;
     }
 
     public List<Game> expand(int player) {
@@ -137,7 +155,7 @@ public class Game {
         for (Direction direction : Direction.values()) {
             for (int i = 1; i <= move_limit; i++) {
                 Game child = new Game(this.getRows(), this.getColumns());
-                if (makeMove(child, player, direction, i, currentX, currentY)) {
+                if (makeMove(child, player, direction, i, currentX, currentY) == MoveResult.SUCCESS) {
                     children.add(child);
                 }
             }
