@@ -4,6 +4,8 @@ public class BoardState {
     private char[][] board;
     private int playerAX, playerAY, playerBX, playerBY;
     private int failureX, failureY;
+    private Direction moveDirection; // Added for error reporting
+    private int moveLength; // Added for error reporting
 
     public BoardState(int rows, int columns) {
         this.rows = rows;
@@ -16,6 +18,8 @@ public class BoardState {
         }
         failureX = -1;
         failureY = -1;
+        moveDirection = null;
+        moveLength = 0;
     }
 
     public BoardState(char[][] board) {
@@ -37,6 +41,8 @@ public class BoardState {
         }
         failureX = -1;
         failureY = -1;
+        moveDirection = null;
+        moveLength = 0;
     }
 
     public void print() {
@@ -65,7 +71,8 @@ public class BoardState {
     public int getPlayerBY() { return playerBY; }
     public int getFailureX() { return failureX; }
     public int getFailureY() { return failureY; }
-    public void setFailurePosition(int x, int y) { failureX = x; failureY = y; }
+    public Direction getMoveDirection() { return moveDirection; }
+    public int getMoveLength() { return moveLength; }
 
     public boolean setBoardCell(int row, int col, char value) {
         board[row][col] = value;
@@ -89,8 +96,13 @@ public class BoardState {
         }
         failureX = -1;
         failureY = -1;
+        moveDirection = null;
+        moveLength = 0;
     }
 
     public void setPlayerAPosition(int x, int y) { playerAX = x; playerAY = y; }
     public void setPlayerBPosition(int x, int y) { playerBX = x; playerBY = y; }
+    public void setFailurePosition(int x, int y) { failureX = x; failureY = y; }
+    public void setMoveDirection(Direction direction) { this.moveDirection = direction; }
+    public void setMoveLength(int length) { this.moveLength = length; }
 }
