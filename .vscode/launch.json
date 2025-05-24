@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "MainConsole",
+      "request": "launch",
+      "mainClass": "MainConsole",
+      "projectName": "AI_MiniMax_Game"
+    },
+    {
+      "type": "java",
+      "name": "Launch MainUI",
+      "request": "launch",
+      "mainClass": "MainUI",
+      "vmArgs": "--module-path \"C:/Program Files/Java/javafx-sdk-21.0.7/lib\" --add-modules javafx.controls,javafx.fxml"
+    }
+  ]
+}

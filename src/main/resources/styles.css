@@ -1,0 +1,74 @@
+.root {
+    background-color: #333333;
+    -fx-background-color: #333333;
+}
+
+#message-label {
+    -fx-text-fill: white;
+    -fx-font-family: Arial;
+    -fx-font-size: 14px;
+    -fx-padding: 10px;
+}
+
+#control-panel {
+    -fx-background-color: #444444;
+    -fx-border-color: #555555;
+    -fx-border-width: 1px;
+}
+
+#action-button {
+    -fx-background-color: #555555;
+    -fx-text-fill: white;
+    -fx-font-family: Arial;
+    -fx-font-size: 12px;
+    -fx-background-radius: 5px;
+    -fx-padding: 5px 10px;
+}
+
+#action-button:hover {
+    -fx-background-color: #666666;
+}
+
+#note-label {
+    -fx-text-fill: #cccccc;
+    -fx-font-family: Arial;
+    -fx-font-size: 12px;
+    -fx-padding: 5px;
+}
+
+.label {
+    -fx-text-fill: white;
+    -fx-font-family: Arial;
+    -fx-font-size: 12px;
+}
+
+.text-field {
+    -fx-background-color: #555555;
+    -fx-text-fill: white;
+    -fx-font-family: Arial;
+    -fx-font-size: 12px;
+}
+
+.combo-box .list-cell {
+    -fx-background-color: #555555;
+    -fx-text-fill: white;
+    -fx-font-family: Arial;
+    -fx-font-size: 12px;
+}
+
+.combo-box-popup .list-view .list-cell {
+    -fx-background-color: #555555;
+    -fx-text-fill: white;
+}
+
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: #666666;
+}
+
+.slider .track {
+    -fx-background-color: #555555;
+}
+
+.slider .thumb {
+    -fx-background-color: #777777;
+}
