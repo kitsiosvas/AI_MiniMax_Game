@@ -1,0 +1,17 @@
+# Java compiled files
+*.class
+*.bin
+
+# IDE files
+.idea/
+*.iml
+
+# Build outputs
+target/
+out/
+
+# LaTeX build files (if using README.tex)
+*.aux
+*.log
+*.out
+*.pdf
