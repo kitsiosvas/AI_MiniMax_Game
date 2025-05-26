@@ -1,5 +1,6 @@
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -14,6 +15,9 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 public class MainUI extends Application {
+    private Scene welcomeScene;
+    private Scene gameScene;
+
     @Override
     public void start(Stage primaryStage) {
         // Welcome Screen
@@ -25,7 +29,7 @@ public class MainUI extends Application {
         Button startButton = new Button("Start Game");
         startButton.setId("action-button");
         welcome.getChildren().addAll(title, startButton);
-        Scene welcomeScene = new Scene(welcome, 800, 600);
+        welcomeScene = new Scene(welcome, 800, 600);
         welcomeScene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
 
         // Game Screen
@@ -50,7 +54,7 @@ public class MainUI extends Application {
         root.setLeft(controlPanel);
         root.setBottom(messageLabel);
         BorderPane.setAlignment(messageLabel, Pos.CENTER);
-        Scene gameScene = new Scene(root, 800, 600);
+        gameScene = new Scene(root, 800, 600);
         gameScene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
 
         // Welcome Animation
@@ -59,10 +63,11 @@ public class MainUI extends Application {
         fade.setToValue(1);
         fade.play();
 
-        // Scene Switching
-        startButton.setOnAction(e -> primaryStage.setScene(gameScene));
-        newGameButton.setOnAction(e -> primaryStage.setScene(welcomeScene));
+        // Scene Switching with Maximized State Preservation
+        startButton.setOnAction(e -> switchScene(primaryStage, gameScene));
+        newGameButton.setOnAction(e -> switchScene(primaryStage, welcomeScene));
 
+        // Initial Scene Setup
         primaryStage.setScene(welcomeScene);
         primaryStage.setTitle("Board Game");
         primaryStage.show();
@@ -71,6 +76,28 @@ public class MainUI extends Application {
         GameIO gameIO = new JavaFXGameIO(primaryStage, boardGrid, messageLabel, controlPanel, progressIndicator);
         GameManager gameManager = new GameManager(gameIO);
         new Thread(() -> gameManager.startGame()).start();
+    }
+
+    private void switchScene(Stage stage, Scene newScene) {
+        boolean isMaximized = stage.isMaximized();
+        double x = stage.getX();
+        double y = stage.getY();
+        double width = stage.getWidth();
+        double height = stage.getHeight();
+
+        stage.setScene(newScene);
+
+        // Restore state after scene switch
+        Platform.runLater(() -> {
+            if (isMaximized) {
+                stage.setMaximized(true);
+            } else {
+                stage.setX(x);
+                stage.setY(y);
+                stage.setWidth(width);
+                stage.setHeight(height);
+            }
+        });
     }
 
     public static void main(String[] args) {
