@@ -1,3 +1,5 @@
+package com.boardgame.logic;
+
 import java.util.ArrayList;
 import java.util.List;
 

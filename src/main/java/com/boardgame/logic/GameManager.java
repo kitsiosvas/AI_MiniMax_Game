@@ -1,5 +1,9 @@
+package com.boardgame.logic;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import com.boardgame.io.GameIO;
 
 public class GameManager {
     private final GameIO gameIO;

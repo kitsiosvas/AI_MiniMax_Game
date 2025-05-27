@@ -1,3 +1,4 @@
+package com.boardgame.io;
 import javafx.animation.FadeTransition;
 import javafx.animation.ScaleTransition;
 import javafx.animation.TranslateTransition;
@@ -19,6 +20,12 @@ import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
+import com.boardgame.logic.BoardState;
+import com.boardgame.logic.Direction;
+import com.boardgame.logic.GameLogic;
+import com.boardgame.logic.MoveResult;
+import com.boardgame.logic.Pair;
 
 public class JavaFXGameIO implements GameIO {
     private final Stage primaryStage;

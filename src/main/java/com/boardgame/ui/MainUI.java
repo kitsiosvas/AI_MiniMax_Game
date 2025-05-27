@@ -1,3 +1,7 @@
+package com.boardgame.ui;
+import com.boardgame.io.JavaFXGameIO;
+import com.boardgame.logic.GameManager;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;

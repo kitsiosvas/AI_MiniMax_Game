@@ -1,3 +1,4 @@
+package com.boardgame.ui;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;

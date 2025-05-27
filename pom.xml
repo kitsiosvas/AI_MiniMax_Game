@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.example</groupId>
+    <groupId>com.boardgame</groupId> <!-- Changed from org.example -->
     <artifactId>game</artifactId>
     <version>1.0-SNAPSHOT</version>
 
@@ -52,7 +52,7 @@
                         <artifactId>exec-maven-plugin</artifactId>
                         <version>3.1.0</version>
                         <configuration>
-                            <mainClass>MainConsole</mainClass>
+                            <mainClass>com.boardgame.console.MainConsole</mainClass>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -70,7 +70,7 @@
                             <execution>
                                 <id>default-cli</id>
                                 <configuration>
-                                    <mainClass>MainUI</mainClass>
+                                    <mainClass>com.boardgame.ui.MainUI</mainClass>
                                 </configuration>
                             </execution>
                         </executions>

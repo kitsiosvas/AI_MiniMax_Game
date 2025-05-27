@@ -1,3 +1,4 @@
+package com.boardgame.ui;
 import javafx.animation.FadeTransition;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;

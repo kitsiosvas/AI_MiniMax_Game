@@ -1,7 +1,14 @@
+package com.boardgame.io;
 import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
+
+import com.boardgame.logic.BoardState;
+import com.boardgame.logic.Direction;
+import com.boardgame.logic.GameLogic;
+import com.boardgame.logic.MoveResult;
+import com.boardgame.logic.Pair;
 
 public class ConsoleGameIO implements GameIO {
     private final Scanner scanner;

@@ -1,3 +1,4 @@
+package com.boardgame.ui;
 import javafx.scene.layout.VBox;
 
 public class ControlPanel {

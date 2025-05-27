@@ -1,3 +1,5 @@
+package com.boardgame.logic;
+
 public enum MoveResult {
     SUCCESS(null, null),
     OUT_OF_BOUNDS("out of bounds", "at"),

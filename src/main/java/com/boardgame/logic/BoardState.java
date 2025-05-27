@@ -1,3 +1,5 @@
+package com.boardgame.logic;
+
 public class BoardState {
     private final int rows;
     private final int columns;
