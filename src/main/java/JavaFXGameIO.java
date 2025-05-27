@@ -7,6 +7,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -41,6 +42,18 @@ public class JavaFXGameIO implements GameIO {
         this.controlPanel = controlPanel;
         this.progressIndicator = progressIndicator;
         this.blackSquares = new ArrayList<>();
+    }
+
+    public void reset() {
+        rows = 0;
+        columns = 0;
+        blackSquares.clear();
+        Platform.runLater(() -> {
+            boardGrid.getChildren().clear();
+            controlPanel.getChildren().clear();
+            messageLabel.setText("== Java program started ==");
+            progressIndicator.setVisible(false);
+        });
     }
 
     @Override
@@ -114,6 +127,8 @@ public class JavaFXGameIO implements GameIO {
                 for (int j = 0; j < columns; j++) {
                     int row = i, col = j;
                     Rectangle cell = (Rectangle) boardGrid.getChildren().get(i * columns + j);
+                    cell.setOnMouseEntered(e -> cell.setEffect(new DropShadow(10, Color.valueOf("#2196F3"))));
+                    cell.setOnMouseExited(e -> cell.setEffect(null));
                     cell.setOnMouseClicked(e -> {
                         if (blackSquares.contains(new int[]{row, col})) {
                             blackSquares.removeIf(pos -> pos[0] == row && pos[1] == col);
@@ -163,6 +178,8 @@ public class JavaFXGameIO implements GameIO {
                 for (int j = 0; j < columns; j++) {
                     int row = i, col = j;
                     Rectangle cell = (Rectangle) boardGrid.getChildren().get(i * columns + j);
+                    cell.setOnMouseEntered(e -> cell.setEffect(new DropShadow(10, Color.valueOf("#2196F3"))));
+                    cell.setOnMouseExited(e -> cell.setEffect(null));
                     cell.setOnMouseClicked(e -> {
                         if (tempBoard[row][col] == '*') {
                             showAlert("Invalid Position", "Cannot place player on black square.");
@@ -269,7 +286,10 @@ public class JavaFXGameIO implements GameIO {
 
     @Override
     public void displayMessage(String message) {
-        Platform.runLater(() -> messageLabel.setText(message));
+        Platform.runLater(() -> {
+            messageLabel.setText(message);
+            progressIndicator.setVisible(message.contains("Calculating"));
+        });
     }
 
     @Override

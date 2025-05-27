@@ -17,6 +17,8 @@ import javafx.util.Duration;
 public class MainUI extends Application {
     private Scene welcomeScene;
     private Scene gameScene;
+    private Thread gameThread;
+    private JavaFXGameIO gameIO;
 
     @Override
     public void start(Stage primaryStage) {
@@ -63,19 +65,46 @@ public class MainUI extends Application {
         fade.setToValue(1);
         fade.play();
 
-        // Scene Switching with Maximized State Preservation
-        startButton.setOnAction(e -> switchScene(primaryStage, gameScene));
-        newGameButton.setOnAction(e -> switchScene(primaryStage, welcomeScene));
+        // Initialize GameIO
+        gameIO = new JavaFXGameIO(primaryStage, boardGrid, messageLabel, controlPanel, progressIndicator);
+
+        // Scene Switching and Game Control
+        startButton.setOnAction(e -> {
+            startNewGame(primaryStage, boardGrid, messageLabel, controlPanel, progressIndicator);
+            switchScene(primaryStage, gameScene);
+        });
+
+        newGameButton.setOnAction(e -> {
+            stopCurrentGame();
+            gameIO.reset();
+            switchScene(primaryStage, welcomeScene);
+        });
 
         // Initial Scene Setup
         primaryStage.setScene(welcomeScene);
         primaryStage.setTitle("Board Game");
         primaryStage.show();
+    }
 
-        // Start Game
-        GameIO gameIO = new JavaFXGameIO(primaryStage, boardGrid, messageLabel, controlPanel, progressIndicator);
+    private void startNewGame(Stage stage, GridPane boardGrid, Label messageLabel, VBox controlPanel, ProgressIndicator progressIndicator) {
+        stopCurrentGame();
+        gameIO = new JavaFXGameIO(stage, boardGrid, messageLabel, controlPanel, progressIndicator);
         GameManager gameManager = new GameManager(gameIO);
-        new Thread(() -> gameManager.startGame()).start();
+        gameThread = new Thread(() -> gameManager.startGame());
+        gameThread.setDaemon(true); // Ensure thread stops when app closes
+        gameThread.start();
+    }
+
+    private void stopCurrentGame() {
+        if (gameThread != null && gameThread.isAlive()) {
+            gameThread.interrupt();
+            try {
+                gameThread.join(100); // Wait briefly for thread to stop
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        gameThread = null;
     }
 
     private void switchScene(Stage stage, Scene newScene) {
@@ -87,7 +116,6 @@ public class MainUI extends Application {
 
         stage.setScene(newScene);
 
-        // Restore state after scene switch
         Platform.runLater(() -> {
             if (isMaximized) {
                 stage.setMaximized(true);
