@@ -21,13 +21,14 @@ public class MainUI extends Application {
         gameScene = new Scene(gameScreen.getRoot(), 800, 600);
         gameScene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
 
-        // Initialize GameIO
+        // Initialize GameIO with callback
         gameIO = new JavaFXGameIO(
             primaryStage,
             gameScreen.getBoardGrid(),
             gameScreen.getMessageLabel(),
             gameScreen.getControlPanel(),
-            gameScreen.getProgressIndicator()
+            gameScreen.getProgressIndicator(),
+            () -> switchScene(primaryStage, welcomeScene)
         );
 
         // Scene Switching and Game Control
@@ -55,11 +56,12 @@ public class MainUI extends Application {
             gameScreen.getBoardGrid(),
             gameScreen.getMessageLabel(),
             gameScreen.getControlPanel(),
-            gameScreen.getProgressIndicator()
+            gameScreen.getProgressIndicator(),
+            () -> switchScene(stage, welcomeScene)
         );
         GameManager gameManager = new GameManager(gameIO);
         gameThread = new Thread(() -> gameManager.startGame());
-        gameThread.setDaemon(true); // Ensure thread stops when app closes
+        gameThread.setDaemon(true);
         gameThread.start();
     }
 
@@ -67,7 +69,7 @@ public class MainUI extends Application {
         if (gameThread != null && gameThread.isAlive()) {
             gameThread.interrupt();
             try {
-                gameThread.join(100); // Wait briefly for thread to stop
+                gameThread.join(100);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

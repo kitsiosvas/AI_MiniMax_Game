@@ -26,21 +26,23 @@ public class JavaFXGameIO implements GameIO {
     private final Label messageLabel;
     private final VBox controlPanel;
     private final ProgressIndicator progressIndicator;
+    private final Runnable switchToWelcomeScene;
     private int rows;
     private int columns;
     private List<int[]> blackSquares;
 
     // Transition configuration
     private enum TransitionType { FADE, SLIDE, SCALE }
-    private final TransitionType transitionType = TransitionType.FADE; // Change to SLIDE or SCALE to try
+    private final TransitionType transitionType = TransitionType.FADE;
     private final double transitionDuration = 500; // ms
 
-    public JavaFXGameIO(Stage stage, GridPane boardGrid, Label messageLabel, VBox controlPanel, ProgressIndicator progressIndicator) {
+    public JavaFXGameIO(Stage stage, GridPane boardGrid, Label messageLabel, VBox controlPanel, ProgressIndicator progressIndicator, Runnable switchToWelcomeScene) {
         this.primaryStage = stage;
         this.boardGrid = boardGrid;
         this.messageLabel = messageLabel;
         this.controlPanel = controlPanel;
         this.progressIndicator = progressIndicator;
+        this.switchToWelcomeScene = switchToWelcomeScene;
         this.blackSquares = new ArrayList<>();
     }
 
@@ -246,6 +248,7 @@ public class JavaFXGameIO implements GameIO {
             );
             controlPanel.getChildren().add(moveContent);
             applyTransition(moveContent);
+            displayMessage("Your turn to move");
 
             moveButton.setOnAction(e -> {
                 String directionStr = directionCombo.getValue();
@@ -277,7 +280,7 @@ public class JavaFXGameIO implements GameIO {
             alert.showAndWait().ifPresent(response -> {
                 future.complete(response == playAgain);
                 if (response == mainMenu) {
-                    Platform.runLater(() -> primaryStage.setScene(primaryStage.getScene().getRoot().getScene()));
+                    Platform.runLater(switchToWelcomeScene);
                 }
             });
         });
@@ -287,8 +290,9 @@ public class JavaFXGameIO implements GameIO {
     @Override
     public void displayMessage(String message) {
         Platform.runLater(() -> {
+            System.out.println("Display message: " + message); // Debug
             messageLabel.setText(message);
-            progressIndicator.setVisible(message.contains("Calculating"));
+            progressIndicator.setVisible(message.toLowerCase().contains("calculating"));
         });
     }
 
@@ -299,9 +303,12 @@ public class JavaFXGameIO implements GameIO {
 
     @Override
     public void displayMoveError(MoveResult result, Direction direction, int length, int failureY, int failureX) {
-        Platform.runLater(() -> showAlert("Move Failed",
-            String.format("Cannot move %s %d: %s at (%d,%d). Game ended.",
-                direction.toString().toLowerCase(), length, result.getMessage(), failureY, failureX)));
+        Platform.runLater(() -> {
+            String errorMessage = String.format("Cannot move %s %d: %s at (%d,%d). Game ended.",
+                direction.toString().toLowerCase(), length, result.getMessage(), failureY, failureX);
+            showAlert("Move Failed", errorMessage);
+            displayMessage("Game over");
+        });
     }
 
     private void updateBoardDisplay(char[][] board) {
