@@ -1,3 +1,4 @@
+![image](https://github.com/user-attachments/assets/b5615f54-123b-4469-8bef-0f149a3fddb7)
 Java Board Game: A Strategic Two-Player Challenge
 This Java-based board game pits a human player against a computer opponent on a customizable grid. Players take turns moving their pieces, aiming to trap their opponent or block their moves. Built with JDK 17, it features a robust AI, intuitive interface, and precise error handling, designed for modularity and extensibility.
 Features
