@@ -1,112 +1,74 @@
-
-Java Board Game: A Strategic Two-Player Challenge
-This Java-based board game pits a human player against a computer opponent on a customizable grid. Players take turns moving their pieces, aiming to trap their opponent or block their moves. Built with JDK 17, it features a robust AI, intuitive interface, and precise error handling, designed for modularity and extensibility.
+JavaFX Board Game: Strategic Two-Player Challenge
+This JavaFX-based board game lets you face off against a computer opponent on a customizable grid. Players take turns moving their pieces, aiming to trap their opponent or block their moves. Built with JDK 21 and JavaFX 21.0.7, the game features a sleek graphical interface, robust AI, and in-game feedback via a MessageArea. Designed for modularity, it’s easy to extend with new features.
 
 ![image](https://github.com/user-attachments/assets/b5615f54-123b-4469-8bef-0f149a3fddb7)
 
 Features
 
-Customizable Board: Set board size and place black square obstacles.
+Customizable Board: Define board size and place black square obstacles interactively.
 Two-Player Gameplay: Human (Player B) vs. Computer (Player A) with strategic moves.
-Smart AI: Powered by a minimax algorithm for challenging computer moves.
-Error Handling: Detailed messages with coordinates (e.g., "Cannot move down 2: out of bounds at (4,3)").
-Clear Display: Grid with row/column indices for easy navigation.
-Modular Design: Separates state (BoardState), logic (GameLogic), and control (Main).
+Smart AI: Uses a minimax algorithm for challenging computer moves.
+Graphical UI: JavaFX interface with a grid display, interactive controls, and animated feedback.
+In-Game Feedback: MessageArea shows errors (red), game end (blue), and status (black) without pop-ups.
+Error Handling: Clear messages with coordinates (e.g., "Cannot move down 2: out of bounds at (4,3)").
+Modular Design: Separates UI (GameScreen, MessageArea), logic (GameLogic), and state (BoardState).
 
 Getting Started
 Prerequisites
 
-Java Development Kit (JDK) 17 or later.
-A terminal or IDE (e.g., IntelliJ, Eclipse).
+Java Development Kit (JDK): 21 or later.
+Maven: 3.9.6 or later.
+IDE: IntelliJ IDEA, Eclipse, or similar (recommended for Maven projects).
+A terminal for running Maven commands.
 
 Installation
 
-Clone the repository:git clone https://github.com/yourusername/java-board-game.git
-cd java-board-game
+Clone the Repository:
+git clone https://github.com/kitsiosvas/AI_MiniMax_Game.git
+cd javafx-board-game
 
 
-Compile the Java files:javac Main.java BoardState.java GameLogic.java MoveResult.java Direction.java
+Build the Project: 
+mvn clean install
 
 
-Run the game:java Main
-
-
+Run the Game:
+mvn javafx:run
 
 How to Play
 
-Setup:
-Enter board size (e.g., "4 4" for 4x4).
-Optionally set black squares ("yes" to add, e.g., at (1,1)).
-Specify starting positions for Player A (computer) and Player B (you).
+Start the Game:
+
+Launch the app to see the Welcome screen.
+Click “Start” to begin a new game.
+
+
+Setup Phase:
+
+Board Size: Enter rows and columns (e.g., 4x4) in the ControlPanel. Errors (e.g., “Rows and columns must be positive.”) appear in red in MessageArea.
+Black Squares: Click grid cells to mark black squares (gray), then click “Confirm”.
+Player Positions: Click to set Player A (computer, red) and Player B (you, blue), then “Confirm”. Errors (e.g., “Cannot place player on black square.”) show in red.
 
 
 Gameplay:
-Players move pieces (A or B) up to 2 squares in directions (e.g., "up_right").
-Input moves as "direction length" (e.g., "right 1").
-Computer uses minimax to plan moves.
-Game ends when a player cannot move (win/loss) or ties.
+
+Your Turn: In ControlPanel, select a direction (e.g., “up_right”) and length (1-2) via a slider, then click “Move”. Invalid moves show errors in red.
+Computer’s Turn: See “Calculating AI move...” with a spinning ProgressIndicator in MessageArea, then the board updates.
+The board displays Player A (red), Player B (blue), black squares (gray), and empty cells (white).
+Game ends when a player cannot move, showing a message like “Cannot move down 2: out of bounds at (4,3). Game ended.” in blue.
 
 
-Example Input/Output:Give number of rows and columns: 
-4 4
-Do you want to set any black squares? Type "yes" for positive: 
-no
-Give i and j of player A (Computer): 
-0 0
-Give i and j of player B (You): 
-3 3
-STARTING POSITION:
-  0 1 2 3
-0|A| | | |
-1| | | | |
-2| | | | |
-3| | | |B|
+Play Again:
 
-
-
-Project Structure
-
-
-
-File
-Description
-
-
-
-Main.java
-Orchestrates setup, game loop, AI, and user input.
-
-
-BoardState.java
-Manages board state, player positions, and display.
-
-
-GameLogic.java
-Handles move validation, AI logic, and win conditions.
-
-
-MoveResult.java
-Enum for move outcomes (e.g., SUCCESS, OUT_OF_BOUNDS).
-
-
-Direction.java
-Enum for move directions (e.g., up, down_right).
+At game end, MessageArea shows “Game over. Click board to play again, or press Esc for main menu.”
+Click the board to restart or press Esc to return to the Welcome screen.
 
 
 Future Plans
 
-Introduce GameManager to manage game flow and multiple games.
-Add Player class for scalable player data.
-Implement player position validation (no black squares or overlap).
-Develop a graphical UI (e.g., JavaFX).
-Support multiplayer modes (e.g., human vs. human).
+Add ControlPanel buttons for “Play Again” and “Main Menu” to replace click/Esc.
+Implement a message history pane to review past MessageArea feedback.
+Refactor JavaFXGameIO into smaller classes (e.g., ControlPanelManager) for better modularity.
+Add undo move functionality and AI difficulty settings.
+Support human vs. human multiplayer mode.
 
-Contributing
-Contributions are welcome! Please:
-
-Fork the repository and create a pull request.
-Follow Java coding standards.
-Test changes (e.g., 4x4 board, A at (1,0), B at (0,0)).
-
-License
-This project is licensed under the MIT License. See LICENSE for details.
