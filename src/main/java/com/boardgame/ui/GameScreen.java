@@ -41,12 +41,8 @@ public class GameScreen {
         return controlPanel.getRoot();
     }
 
-    public Label getMessageLabel() {
-        return messageArea.getMessageLabel();
-    }
-
-    public ProgressIndicator getProgressIndicator() {
-        return messageArea.getProgressIndicator();
+    public MessageArea getMessageArea() {
+        return messageArea;
     }
 
     public Button getNewGameButton() {

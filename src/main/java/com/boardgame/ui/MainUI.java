@@ -18,20 +18,30 @@ public class MainUI extends Application {
         // Welcome Screen
         WelcomeScreen welcomeScreen = new WelcomeScreen();
         welcomeScene = new Scene(welcomeScreen.getRoot(), 800, 600);
-        welcomeScene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
+        String css = getClass().getResource("/styles.css").toExternalForm();
+        if (css == null) {
+            System.err.println("Error: styles.css not found at /styles.css");
+        } else {
+            welcomeScene.getStylesheets().add(css);
+            System.out.println("Loaded styles.css for welcomeScene");
+        }
 
         // Game Screen
         GameScreen gameScreen = new GameScreen();
         gameScene = new Scene(gameScreen.getRoot(), 800, 600);
-        gameScene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
+        if (css == null) {
+            System.err.println("Error: styles.css not found at /styles.css");
+        } else {
+            gameScene.getStylesheets().add(css);
+            System.out.println("Loaded styles.css for gameScene");
+        }
 
         // Initialize GameIO with callback
         gameIO = new JavaFXGameIO(
             primaryStage,
             gameScreen.getBoardGrid(),
-            gameScreen.getMessageLabel(),
+            gameScreen.getMessageArea(),
             gameScreen.getControlPanel(),
-            gameScreen.getProgressIndicator(),
             () -> switchScene(primaryStage, welcomeScene)
         );
 
@@ -58,9 +68,8 @@ public class MainUI extends Application {
         gameIO = new JavaFXGameIO(
             stage,
             gameScreen.getBoardGrid(),
-            gameScreen.getMessageLabel(),
+            gameScreen.getMessageArea(),
             gameScreen.getControlPanel(),
-            gameScreen.getProgressIndicator(),
             () -> switchScene(stage, welcomeScene)
         );
         GameManager gameManager = new GameManager(gameIO);

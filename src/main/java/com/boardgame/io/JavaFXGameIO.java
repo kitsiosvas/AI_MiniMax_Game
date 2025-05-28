@@ -9,11 +9,11 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -26,13 +26,13 @@ import com.boardgame.logic.Direction;
 import com.boardgame.logic.GameLogic;
 import com.boardgame.logic.MoveResult;
 import com.boardgame.logic.Pair;
+import com.boardgame.ui.MessageArea;
 
 public class JavaFXGameIO implements GameIO {
     private final Stage primaryStage;
     private final GridPane boardGrid;
-    private final Label messageLabel;
+    private final MessageArea messageArea;
     private final VBox controlPanel;
-    private final ProgressIndicator progressIndicator;
     private final Runnable switchToWelcomeScene;
     private int rows;
     private int columns;
@@ -43,12 +43,11 @@ public class JavaFXGameIO implements GameIO {
     private final TransitionType transitionType = TransitionType.FADE;
     private final double transitionDuration = 500; // ms
 
-    public JavaFXGameIO(Stage stage, GridPane boardGrid, Label messageLabel, VBox controlPanel, ProgressIndicator progressIndicator, Runnable switchToWelcomeScene) {
+    public JavaFXGameIO(Stage stage, GridPane boardGrid, MessageArea messageArea, VBox controlPanel, Runnable switchToWelcomeScene) {
         this.primaryStage = stage;
         this.boardGrid = boardGrid;
-        this.messageLabel = messageLabel;
+        this.messageArea = messageArea;
         this.controlPanel = controlPanel;
-        this.progressIndicator = progressIndicator;
         this.switchToWelcomeScene = switchToWelcomeScene;
         this.blackSquares = new ArrayList<>();
     }
@@ -60,8 +59,7 @@ public class JavaFXGameIO implements GameIO {
         Platform.runLater(() -> {
             boardGrid.getChildren().clear();
             controlPanel.getChildren().clear();
-            messageLabel.setText("== Java program started ==");
-            progressIndicator.setVisible(false);
+            messageArea.updateMessage("== Java program started ==", MessageArea.MessageType.NEUTRAL);
         });
     }
 
@@ -96,14 +94,14 @@ public class JavaFXGameIO implements GameIO {
                     int rows = Integer.parseInt(rowsField.getText());
                     int cols = Integer.parseInt(colsField.getText());
                     if (rows <= 0 || cols <= 0) {
-                        showAlert("Invalid Input", "Rows and columns must be positive.");
+                        messageArea.updateMessage("Rows and columns must be positive.", MessageArea.MessageType.ERROR);
                     } else {
                         this.rows = rows;
                         this.columns = cols;
                         future.complete(new int[]{rows, cols});
                     }
                 } catch (NumberFormatException ex) {
-                    showAlert("Invalid Input", "Please enter valid integers.");
+                    messageArea.updateMessage("Please enter valid integers.", MessageArea.MessageType.ERROR);
                 }
             });
         });
@@ -191,7 +189,7 @@ public class JavaFXGameIO implements GameIO {
                     cell.setOnMouseExited(e -> cell.setEffect(null));
                     cell.setOnMouseClicked(e -> {
                         if (tempBoard[row][col] == '*') {
-                            showAlert("Invalid Position", "Cannot place player on black square.");
+                            messageArea.updateMessage("Cannot place player on black square.", MessageArea.MessageType.ERROR);
                             return;
                         }
                         if (selectingPlayerA[0]) {
@@ -206,7 +204,7 @@ public class JavaFXGameIO implements GameIO {
                             instruction.setText("Click to set Player B (blue):");
                         } else {
                             if (row == playerA[0] && col == playerA[1]) {
-                                showAlert("Invalid Position", "Players cannot share position.");
+                                messageArea.updateMessage("Players cannot share position.", MessageArea.MessageType.ERROR);
                                 return;
                             }
                             if (playerB[0] != -1) {
@@ -223,7 +221,7 @@ public class JavaFXGameIO implements GameIO {
 
             confirmButton.setOnAction(e -> {
                 if (playerA[0] == -1 || playerB[0] == -1) {
-                    showAlert("Invalid Input", "Please set positions for both players.");
+                    messageArea.updateMessage("Please set positions for both players.", MessageArea.MessageType.ERROR);
                 } else {
                     future.complete(new int[][]{{playerA[0], playerA[1]}, {playerB[0], playerB[1]}});
                 }
@@ -255,15 +253,19 @@ public class JavaFXGameIO implements GameIO {
             );
             controlPanel.getChildren().add(moveContent);
             applyTransition(moveContent);
-            displayMessage("Your turn to move");
+            messageArea.updateMessage("Your turn to move", MessageArea.MessageType.NEUTRAL);
 
             moveButton.setOnAction(e -> {
+                System.out.println("Move button clicked"); // Debug
                 String directionStr = directionCombo.getValue();
                 int length = (int) lengthSlider.getValue();
+                System.out.println("Direction: " + directionStr + ", Length: " + length); // Debug
                 Direction direction = Direction.fromString(directionStr);
                 if (direction == null || length <= 0) {
-                    showAlert("Invalid Move", "Please select valid direction and length.");
+                    messageArea.updateMessage("Please select a valid direction and length.", MessageArea.MessageType.ERROR);
+                    System.out.println("Invalid move: direction=" + direction + ", length=" + length); // Debug
                 } else {
+                    System.out.println("Completing future with direction=" + direction + ", length=" + length); // Debug
                     future.complete(new Pair<>(direction, length));
                 }
             });
@@ -275,19 +277,23 @@ public class JavaFXGameIO implements GameIO {
     public boolean promptPlayAgain() {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.setTitle("Game Over");
-            alert.setHeaderText("Play another game?");
-            ButtonType playAgain = new ButtonType("Play Again");
-            ButtonType mainMenu = new ButtonType("Main Menu");
-            alert.getButtonTypes().setAll(playAgain, mainMenu);
-            alert.initOwner(primaryStage);
-            alert.initModality(Modality.APPLICATION_MODAL);
-            applyTransition(alert.getDialogPane());
-            alert.showAndWait().ifPresent(response -> {
-                future.complete(response == playAgain);
-                if (response == mainMenu) {
+            controlPanel.getChildren().clear();
+            messageArea.updateMessage("Game over. Click board to play again, or press Esc for main menu.", MessageArea.MessageType.GAME_END);
+
+            // Add mouse click handler to boardGrid
+            boardGrid.setOnMouseClicked(e -> {
+                boardGrid.setOnMouseClicked(null); // Remove handler
+                primaryStage.getScene().setOnKeyPressed(null); // Remove key handler
+                future.complete(true);
+            });
+
+            // Add key press handler for Esc
+            primaryStage.getScene().setOnKeyPressed(e -> {
+                if (e.getCode() == KeyCode.ESCAPE) {
+                    boardGrid.setOnMouseClicked(null); // Remove handler
+                    primaryStage.getScene().setOnKeyPressed(null); // Remove key handler
                     Platform.runLater(switchToWelcomeScene);
+                    future.complete(false);
                 }
             });
         });
@@ -298,8 +304,9 @@ public class JavaFXGameIO implements GameIO {
     public void displayMessage(String message) {
         Platform.runLater(() -> {
             System.out.println("Display message: " + message); // Debug
-            messageLabel.setText(message);
-            progressIndicator.setVisible(message.toLowerCase().contains("calculating"));
+            MessageArea.MessageType type = message.toLowerCase().contains("calculating") ? 
+                MessageArea.MessageType.NEUTRAL : MessageArea.MessageType.NEUTRAL;
+            messageArea.updateMessage(message, type);
         });
     }
 
@@ -313,8 +320,7 @@ public class JavaFXGameIO implements GameIO {
         Platform.runLater(() -> {
             String errorMessage = String.format("Cannot move %s %d: %s at (%d,%d). Game ended.",
                 direction.toString().toLowerCase(), length, result.getMessage(), failureY, failureX);
-            showAlert("Move Failed", errorMessage);
-            displayMessage("Game over");
+            messageArea.updateMessage(errorMessage, MessageArea.MessageType.GAME_END);
         });
     }
 
@@ -337,16 +343,6 @@ public class JavaFXGameIO implements GameIO {
                 boardGrid.add(cell, j, i);
             }
         }
-    }
-
-    private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.initOwner(primaryStage);
-        applyTransition(alert.getDialogPane());
-        alert.showAndWait();
     }
 
     private void applyTransition(Node node) {
