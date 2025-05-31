@@ -1,9 +1,8 @@
 package com.boardgame.logic;
 
+import com.boardgame.io.GameIO;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.boardgame.io.GameIO;
 
 public class GameManager {
     private final GameIO gameIO;
@@ -73,22 +72,22 @@ public class GameManager {
             }
 
             // Human move
-            BoardState tempState = new BoardState(currentState.getBoard());
             Pair<Direction, Integer> move = gameIO.promptPlayerMove();
             Direction direction = move.getFirst();
             int length = move.getSecond();
-            tempState.setMoveDirection(direction);
-            tempState.setMoveLength(length);
-            MoveResult moveResult = logic.makeMove(currentState, tempState, 2, direction, length,
-                    currentState.getPlayerBX(), currentState.getPlayerBY());
-            if (moveResult != MoveResult.SUCCESS) {
-                int failureX = tempState.getFailureX();
-                int failureY = tempState.getFailureY();
-                gameIO.displayMoveError(moveResult, direction, length, failureY, failureX);
+            Pair<MoveResult, int[]> result = logic.isValidMove(
+                currentState, 2, direction, length, currentState.getPlayerBX(), currentState.getPlayerBY()
+            );
+            if (result.getFirst() != MoveResult.SUCCESS) {
+                int failureY = result.getSecond()[0];
+                int failureX = result.getSecond()[1];
+                gameIO.displayMoveError(result.getFirst(), direction, length, failureY, failureX);
                 evaluationResult = logic.evaluate(currentState, 1);
                 break;
             }
-            currentState = tempState;
+            currentState = logic.makeMove(
+                currentState, 2, direction, length, currentState.getPlayerBX(), currentState.getPlayerBY()
+            );
             gameIO.displayBoard(currentState);
             evaluationResult = logic.evaluate(currentState, 1);
         } while (evaluationResult == -100);
@@ -112,22 +111,22 @@ public class GameManager {
         }
 
         int maxScore, tempScore;
-        BoardState maxState = new BoardState(state.getRows(), state.getColumns());
-        BoardState tempState = new BoardState(state.getRows(), state.getColumns());
-
         List<BoardState> children = logic.expand(state, isMax ? 1 : 2);
+        if (children.isEmpty()) {
+            bestState.setBoard(state.getBoard());
+            return evaluationResult;
+        }
 
-        maxScore = minimax(children.get(0), depth - 1, !isMax, maxState);
-        maxState = children.get(0);
+        maxScore = minimax(children.get(0), depth - 1, !isMax, bestState);
 
         for (int i = 1; i < children.size(); i++) {
+            BoardState tempState = new BoardState(state.getRows(), state.getColumns());
             tempScore = minimax(children.get(i), depth - 1, !isMax, tempState);
             if ((tempScore > maxScore) == isMax) {
                 maxScore = tempScore;
-                maxState = children.get(i);
+                bestState.setBoard(children.get(i).getBoard());
             }
         }
-        bestState.setBoard(maxState.getBoard());
         return maxScore;
     }
 }
