@@ -115,3 +115,19 @@
 .tab-pane .tab-content-area {
     -fx-background-color: #2A2A2A;
 }
+
+.black-square {
+    -fx-fill: gray;
+}
+
+.player-a {
+    -fx-fill: red;
+}
+
+.player-b {
+    -fx-fill: blue;
+}
+
+.valid-move {
+    -fx-fill: lightgreen;
+}
