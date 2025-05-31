@@ -57,9 +57,6 @@ public class GameManager {
         BoardState bestState = new BoardState(rows, columns);
         int evaluationResult;
 
-        gameIO.displayMessage("STARTING POSITION:");
-        gameIO.displayBoard(currentState);
-
         do {
             // AI move
             gameIO.displayMessage("Calculating my move...");
