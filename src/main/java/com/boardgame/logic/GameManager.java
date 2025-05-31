@@ -138,11 +138,8 @@ public class GameManager {
             int score = result.getFirst();
             if (isMax) {
                 if (score > bestScore) {
-                    // Only select states where Player B's position is unchanged
-                    if (child.getPlayerBX() == originalBX && child.getPlayerBY() == originalBY) {
-                        bestScore = score;
-                        bestChildState = new BoardState(child.getBoard());
-                    }
+                    bestScore = score;
+                    bestChildState = new BoardState(child.getBoard());
                 }
             } else {
                 if (score < bestScore) {
