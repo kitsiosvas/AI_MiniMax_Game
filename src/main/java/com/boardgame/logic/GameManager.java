@@ -54,31 +54,48 @@ public class GameManager {
     }
 
     private void runGameLoop(BoardState currentState) {
-        BoardState bestState = new BoardState(rows, columns);
         int evaluationResult;
 
+        gameIO.displayMessage("STARTING POSITION:");
+        gameIO.displayBoard(currentState);
+
         do {
+            // Store Player B's position before AI move
+            int originalBX = currentState.getPlayerBX();
+            int originalBY = currentState.getPlayerBY();
+
             // AI move
             gameIO.displayMessage("Calculating my move...");
-            int minimaxScore = minimax(currentState, 10, true, bestState);
-            currentState = bestState;
+            Pair<Integer, BoardState> result = minimax(currentState, 10, true);
+            currentState = result.getSecond();
+
+            // Check if Player B's position changed
+            if (currentState.getPlayerBX() != originalBX || currentState.getPlayerBY() != originalBY) {
+                gameIO.displayMessage("Error: Player B moved unexpectedly to (" + currentState.getPlayerBX() + "," + currentState.getPlayerBY() + ")");
+                // Revert to original state
+                currentState = new BoardState(currentState.getRows(), currentState.getColumns());
+                currentState.setBoard(result.getSecond().getBoard());
+                currentState.setPlayerBPosition(originalBX, originalBY);
+                currentState.setBoardCell(originalBY, originalBX, 'B');
+            }
+
             gameIO.displayBoard(currentState);
             evaluationResult = logic.evaluate(currentState, 2);
             if (evaluationResult != -100) {
                 break;
             }
 
-            // Human move
+            // Human move (unchanged)
             Pair<Direction, Integer> move = gameIO.promptPlayerMove();
             Direction direction = move.getFirst();
             int length = move.getSecond();
-            Pair<MoveResult, int[]> result = logic.isValidMove(
+            Pair<MoveResult, int[]> moveResult = logic.isValidMove(
                 currentState, 2, direction, length, currentState.getPlayerBX(), currentState.getPlayerBY()
             );
-            if (result.getFirst() != MoveResult.SUCCESS) {
-                int failureY = result.getSecond()[0];
-                int failureX = result.getSecond()[1];
-                gameIO.displayMoveError(result.getFirst(), direction, length, failureY, failureX);
+            if (moveResult.getFirst() != MoveResult.SUCCESS) {
+                int failureY = moveResult.getSecond()[0];
+                int failureX = moveResult.getSecond()[1];
+                gameIO.displayMoveError(moveResult.getFirst(), direction, length, failureY, failureX);
                 evaluationResult = logic.evaluate(currentState, 1);
                 break;
             }
@@ -99,31 +116,47 @@ public class GameManager {
         }
     }
 
-    private int minimax(BoardState state, int depth, boolean isMax, BoardState bestState) {
+    private Pair<Integer, BoardState> minimax(BoardState state, int depth, boolean isMax) {
         int evaluationResult = logic.evaluate(state, isMax ? 1 : 2);
 
         if (depth == 0 || evaluationResult != -100) {
-            bestState.setBoard(state.getBoard());
-            return evaluationResult;
+            return new Pair<>(evaluationResult, new BoardState(state.getBoard()));
         }
 
-        int maxScore, tempScore;
         List<BoardState> children = logic.expand(state, isMax ? 1 : 2);
         if (children.isEmpty()) {
-            bestState.setBoard(state.getBoard());
-            return evaluationResult;
+            return new Pair<>(evaluationResult, new BoardState(state.getBoard()));
         }
 
-        maxScore = minimax(children.get(0), depth - 1, !isMax, bestState);
+        int bestScore = isMax ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        BoardState bestChildState = null;
+        int originalBX = state.getPlayerBX();
+        int originalBY = state.getPlayerBY();
 
-        for (int i = 1; i < children.size(); i++) {
-            BoardState tempState = new BoardState(state.getRows(), state.getColumns());
-            tempScore = minimax(children.get(i), depth - 1, !isMax, tempState);
-            if ((tempScore > maxScore) == isMax) {
-                maxScore = tempScore;
-                bestState.setBoard(children.get(i).getBoard());
+        for (BoardState child : children) {
+            Pair<Integer, BoardState> result = minimax(child, depth - 1, !isMax);
+            int score = result.getFirst();
+            if (isMax) {
+                if (score > bestScore) {
+                    // Only select states where Player B's position is unchanged
+                    if (child.getPlayerBX() == originalBX && child.getPlayerBY() == originalBY) {
+                        bestScore = score;
+                        bestChildState = new BoardState(child.getBoard());
+                    }
+                }
+            } else {
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestChildState = new BoardState(child.getBoard());
+                }
             }
         }
-        return maxScore;
+
+        // Fallback to input state if no valid move found
+        if (bestChildState == null) {
+            bestChildState = new BoardState(state.getBoard());
+        }
+
+        return new Pair<>(bestScore, bestChildState);
     }
 }
