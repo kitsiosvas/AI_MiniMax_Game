@@ -22,13 +22,7 @@ public class GameManager {
     public void startNewGame() {
         gameIO.displayMessage("== Java program started ==");
         BoardState state = setupGame();
-        do {
-            runGameLoop(state);
-            if (!gameIO.promptPlayAgain()) {
-                break;
-            }
-            state = promptPlayerPositionsAndInitBoard();
-        } while (true);
+        runGameLoop(state);
     }
 
     private BoardState setupGame() {

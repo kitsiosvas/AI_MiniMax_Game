@@ -276,18 +276,10 @@ public class JavaFXGameIO implements GameIO {
 
     @Override
     public boolean promptPlayAgain() {
-        CompletableFuture<Boolean> future = new CompletableFuture<>();
         Platform.runLater(() -> {
-            controlPanel.getChildren().clear();
-            messageArea.updateMessage("Game over. Click board to play again.", MessageArea.MessageType.GAME_END);
-
-            // Add mouse click handler to boardGrid
-            boardGrid.setOnMouseClicked(e -> {
-                boardGrid.setOnMouseClicked(null); // Remove handler
-                future.complete(true);
-            });
+            messageArea.updateMessage("Game over. Use the 'New Game' button to play again.", MessageArea.MessageType.GAME_END);
         });
-        return future.join();
+        return false;
     }
 
     @Override
@@ -308,10 +300,10 @@ public class JavaFXGameIO implements GameIO {
     @Override
     public CompletableFuture<Void> displayGameFinished(int evaluationResult) {
         String message = switch (evaluationResult) {
-            case 1 -> "I win!";
-            case 0 -> "Tie!";
-            case -1 -> "You win!";
-            default -> "Game ended.";
+            case 1 -> "I win! Use the 'New Game' button to play again.";
+            case 0 -> "Tie! Use the 'New Game' button to play again.";
+            case -1 -> "You win! Use the 'New Game' button to play again.";
+            default -> "Game ended. Use the 'New Game' button to play again.";
         };
         return displayGameEndMessage(message, MessageArea.MessageType.GAME_END);
     }
@@ -398,20 +390,11 @@ public class JavaFXGameIO implements GameIO {
         Platform.runLater(() -> {
             messageArea.updateMessage(message, type);
             controlPanel.getChildren().clear();
-
-            Button continueButton = new Button("Continue");
-            continueButton.setId("action-button");
-            continueButton.setOnAction(e -> {
-                controlPanel.getChildren().clear();
-                future.complete(null);
-            });
-            controlPanel.getChildren().add(continueButton);
-            applyTransition(continueButton);
-
             FadeTransition fade = new FadeTransition(Duration.millis(500), messageArea.getMessageLabel());
             fade.setFromValue(0);
             fade.setToValue(1);
             fade.play();
+            future.complete(null);
         });
         return future;
     }
