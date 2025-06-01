@@ -1,9 +1,12 @@
 package com.boardgame.io;
+
 import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
 
+import com.boardgame.ui.MessageArea; // Add import
 import com.boardgame.logic.BoardState;
 import com.boardgame.logic.Direction;
 import com.boardgame.logic.GameLogic;
@@ -142,5 +145,31 @@ public class ConsoleGameIO implements GameIO {
         System.out.printf("Cannot move %s %d: %s %s (%d,%d). Game ended.%n",
                 direction.toString().toLowerCase(), length,
                 result.getMessage(), result.getPreposition(), failureY, failureX);
+    }
+
+    @Override
+    public CompletableFuture<Void> displayGameEndMessage(String message, MessageArea.MessageType type) {
+        System.out.println(message);
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Override
+    public CompletableFuture<Void> displayGameFinished(int evaluationResult) {
+        String message = switch (evaluationResult) {
+            case 1 -> "I win!";
+            case 0 -> "Tie!";
+            case -1 -> "You win!";
+            default -> "Game ended.";
+        };
+        System.out.println(message);
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Override
+    public CompletableFuture<Void> displayGameEndError(MoveResult result, Direction direction, int length, int failureY, int failureX) {
+        System.out.printf("Cannot move %s %d: %s %s (%d,%d). Game ended.%n",
+            direction.toString().toLowerCase(), length, result.getMessage(),
+            result.getPreposition() != null ? result.getPreposition() : "at", failureY, failureX);
+        return CompletableFuture.completedFuture(null);
     }
 }

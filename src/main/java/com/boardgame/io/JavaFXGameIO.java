@@ -316,11 +316,35 @@ public class JavaFXGameIO implements GameIO {
     }
 
     @Override
+    public CompletableFuture<Void> displayGameFinished(int evaluationResult) {
+        String message = switch (evaluationResult) {
+            case 1 -> "I win!";
+            case 0 -> "Tie!";
+            case -1 -> "You win!";
+            default -> "Game ended.";
+        };
+        return displayGameEndMessage(message, MessageArea.MessageType.GAME_END);
+    }
+
+    @Override
+    public CompletableFuture<Void> displayGameEndError(MoveResult result, Direction direction, int length, int failureY, int failureX) {
+        String message = String.format("Cannot move %s %d: %s %s (%d,%d). Game ended.",
+            direction.toString().toLowerCase(), length, result.getMessage(),
+            result.getPreposition() != null ? result.getPreposition() : "at", failureY, failureX);
+        return displayGameEndMessage(message, MessageArea.MessageType.GAME_END);
+    }
+
+    @Override
     public void displayMoveError(MoveResult result, Direction direction, int length, int failureY, int failureX) {
         Platform.runLater(() -> {
-            String errorMessage = String.format("Cannot move %s %d: %s at (%d,%d). Game ended.",
-                direction.toString().toLowerCase(), length, result.getMessage(), failureY, failureX);
-            messageArea.updateMessage(errorMessage, MessageArea.MessageType.GAME_END);
+            String message = String.format("Cannot move %s %d: %s %s (%d,%d).",
+                direction.toString().toLowerCase(), length, result.getMessage(),
+                result.getPreposition() != null ? result.getPreposition() : "at", failureY, failureX);
+            messageArea.updateMessage(message, MessageArea.MessageType.ERROR);
+            FadeTransition fade = new FadeTransition(Duration.millis(500), messageArea.getMessageLabel());
+            fade.setFromValue(0);
+            fade.setToValue(1);
+            fade.play();
         });
     }
 
@@ -376,5 +400,29 @@ public class JavaFXGameIO implements GameIO {
         fade.setFromValue(0.5);
         fade.setToValue(1);
         fade.play();
+    }
+
+    @Override
+    public CompletableFuture<Void> displayGameEndMessage(String message, MessageArea.MessageType type) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        Platform.runLater(() -> {
+            messageArea.updateMessage(message, type);
+            controlPanel.getChildren().clear();
+
+            Button continueButton = new Button("Continue");
+            continueButton.setId("action-button");
+            continueButton.setOnAction(e -> {
+                controlPanel.getChildren().clear();
+                future.complete(null);
+            });
+            controlPanel.getChildren().add(continueButton);
+            applyTransition(continueButton);
+
+            FadeTransition fade = new FadeTransition(Duration.millis(500), messageArea.getMessageLabel());
+            fade.setFromValue(0);
+            fade.setToValue(1);
+            fade.play();
+        });
+        return future;
     }
 }

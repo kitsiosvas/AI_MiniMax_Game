@@ -1,6 +1,8 @@
 package com.boardgame.logic;
 
 import com.boardgame.io.GameIO;
+import com.boardgame.io.JavaFXGameIO;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,9 +68,12 @@ public class GameManager {
             currentState = result.getSecond();
             gameIO.displayBoard(currentState);
             evaluationResult = logic.evaluate(currentState, 2);
-            if (evaluationResult != -100) { break; }
+            if (evaluationResult != -100) {
+                gameIO.displayGameFinished(evaluationResult).join();
+                break;
+            }
 
-            // Human move (unchanged)
+            // Human move
             Pair<Direction, Integer> move = gameIO.promptPlayerMove();
             Direction direction = move.getFirst();
             int length = move.getSecond();
@@ -78,7 +83,7 @@ public class GameManager {
             if (moveResult.getFirst() != MoveResult.SUCCESS) {
                 int failureY = moveResult.getSecond()[0];
                 int failureX = moveResult.getSecond()[1];
-                gameIO.displayMoveError(moveResult.getFirst(), direction, length, failureY, failureX);
+                gameIO.displayGameEndError(moveResult.getFirst(), direction, length, failureY, failureX).join();
                 evaluationResult = logic.evaluate(currentState, 1);
                 break;
             }
@@ -88,15 +93,6 @@ public class GameManager {
             gameIO.displayBoard(currentState);
             evaluationResult = logic.evaluate(currentState, 1);
         } while (evaluationResult == -100);
-
-        // Print game result
-        if (evaluationResult == 1) {
-            gameIO.displayMessage("I win!");
-        } else if (evaluationResult == 0) {
-            gameIO.displayMessage("Tie!");
-        } else if (evaluationResult == -1) {
-            gameIO.displayMessage("You win!");
-        }
     }
 
     private Pair<Integer, BoardState> minimax(BoardState state, int depth, boolean isMax) {
