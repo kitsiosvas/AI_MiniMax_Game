@@ -279,24 +279,12 @@ public class JavaFXGameIO implements GameIO {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         Platform.runLater(() -> {
             controlPanel.getChildren().clear();
-            messageArea.updateMessage("Game over. Click board to play again, or press Esc for main menu.", MessageArea.MessageType.GAME_END);
+            messageArea.updateMessage("Game over. Click board to play again.", MessageArea.MessageType.GAME_END);
 
             // Add mouse click handler to boardGrid
             boardGrid.setOnMouseClicked(e -> {
                 boardGrid.setOnMouseClicked(null); // Remove handler
-                primaryStage.getScene().setOnKeyPressed(null); // Remove key handler
                 future.complete(true);
-            });
-
-            // Add key press handler for Esc
-            primaryStage.getScene().setOnKeyPressed(e -> {
-                if (e.getCode() == KeyCode.ESCAPE) {
-                    boardGrid.setOnMouseClicked(null); // Remove handler
-                    primaryStage.getScene().setOnKeyPressed(null); // Remove key handler
-                    reset(); // Clear board and UI state
-                    Platform.runLater(switchToWelcomeScene);
-                    future.complete(false);
-                }
             });
         });
         return future.join();
