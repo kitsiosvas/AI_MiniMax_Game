@@ -10,7 +10,7 @@ public class MainConsole {
         try (Scanner scanner = new Scanner(System.in)) {
             GameIO gameIO = new ConsoleGameIO(scanner);
             GameManager gameManager = new GameManager(gameIO);
-            gameManager.startGame();
+            gameManager.startNewGame();
         }
     }
 }

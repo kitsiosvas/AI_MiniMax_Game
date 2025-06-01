@@ -19,7 +19,7 @@ public class GameManager {
         this.logic = new GameLogic();
     }
 
-    public void startGame() {
+    public void startNewGame() {
         gameIO.displayMessage("== Java program started ==");
         BoardState state = setupGame();
         do {

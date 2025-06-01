@@ -61,7 +61,7 @@ public class MainUI extends Application {
             stopCurrentGame();
             gameIO.reset();
             GameManager gameManager = new GameManager(gameIO);
-            gameThread = new Thread(() -> gameManager.startGame());
+            gameThread = new Thread(() -> gameManager.startNewGame());
             gameThread.setDaemon(true);
             gameThread.start();
         });
@@ -81,7 +81,7 @@ public class MainUI extends Application {
             gameScreen.getControlPanel(),
             () -> switchScene(stage, welcomeScene));
         GameManager gameManager = new GameManager(gameIO);
-        gameThread = new Thread(() -> gameManager.startGame());
+        gameThread = new Thread(() -> gameManager.startNewGame());
         gameThread.setDaemon(true);
         gameThread.start();
     }
