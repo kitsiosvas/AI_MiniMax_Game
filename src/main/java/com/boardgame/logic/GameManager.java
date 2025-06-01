@@ -60,10 +60,6 @@ public class GameManager {
         gameIO.displayBoard(currentState);
 
         do {
-            // Store Player B's position before AI move
-            int originalBX = currentState.getPlayerBX();
-            int originalBY = currentState.getPlayerBY();
-
             // AI move
             gameIO.displayMessage("Calculating my move...");
             Pair<Integer, BoardState> result = minimax(currentState, 10, true);
