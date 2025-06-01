@@ -1,33 +1,22 @@
 package com.boardgame.io;
 
-import javafx.animation.FadeTransition;
-import javafx.animation.ScaleTransition;
-import javafx.animation.TranslateTransition;
-import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.effect.DropShadow;
-import javafx.scene.input.KeyCode;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
-import javafx.stage.Stage;
-import javafx.util.Duration;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
+import com.boardgame.ui.IBoardUI;
+import com.boardgame.ui.BoardUI;
+import com.boardgame.ui.MessageArea;
 import com.boardgame.logic.BoardState;
 import com.boardgame.logic.Direction;
 import com.boardgame.logic.GameLogic;
 import com.boardgame.logic.MoveResult;
 import com.boardgame.logic.Pair;
-import com.boardgame.ui.MessageArea;
+import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class JavaFXGameIO implements GameIO {
     private final Stage primaryStage;
@@ -38,11 +27,7 @@ public class JavaFXGameIO implements GameIO {
     private int rows;
     private int columns;
     private List<int[]> blackSquares;
-
-    // Transition configuration
-    private enum TransitionType { FADE, SLIDE, SCALE }
-    private final TransitionType transitionType = TransitionType.FADE;
-    private final double transitionDuration = 500; // ms
+    private BoardUI boardUI;
 
     public JavaFXGameIO(Stage stage, GridPane boardGrid, MessageArea messageArea, VBox controlPanel, Runnable switchToWelcomeScene) {
         this.primaryStage = stage;
@@ -58,9 +43,11 @@ public class JavaFXGameIO implements GameIO {
         columns = 0;
         blackSquares.clear();
         Platform.runLater(() -> {
-            boardGrid.getChildren().clear();
             controlPanel.getChildren().clear();
             messageArea.updateMessage("== Java program started ==", MessageArea.MessageType.NEUTRAL);
+            if (boardUI != null) {
+                boardUI.clearBoard();
+            }
         });
     }
 
@@ -88,7 +75,6 @@ public class JavaFXGameIO implements GameIO {
             sizeTab.setContent(sizeContent);
             tabPane.getTabs().add(sizeTab);
             controlPanel.getChildren().add(tabPane);
-            applyTransition(tabPane);
 
             submitButton.setOnAction(e -> {
                 try {
@@ -99,6 +85,8 @@ public class JavaFXGameIO implements GameIO {
                     } else {
                         this.rows = rows;
                         this.columns = cols;
+                        this.boardUI = new BoardUI(primaryStage, boardGrid, messageArea, rows, cols);
+                        System.out.println("BoardUI initialized with size " + rows + "x" + cols);
                         future.complete(new int[]{rows, cols});
                     }
                 } catch (NumberFormatException ex) {
@@ -111,8 +99,12 @@ public class JavaFXGameIO implements GameIO {
 
     @Override
     public List<int[]> promptBlackSquares(int rows, int columns) {
-        CompletableFuture<List<int[]>> future = new CompletableFuture<>();
-        blackSquares.clear();
+        if (boardUI == null) {
+            System.err.println("Error: BoardUI not initialized");
+            messageArea.updateMessage("Error: Board not initialized. Please set board size first.", MessageArea.MessageType.ERROR);
+            return new ArrayList<>();
+        }
+        CompletableFuture<List<int[]>> future = boardUI.promptBlackSquares();
         Platform.runLater(() -> {
             controlPanel.getChildren().clear();
             TabPane tabPane = new TabPane();
@@ -128,35 +120,23 @@ public class JavaFXGameIO implements GameIO {
             blackTab.setContent(blackContent);
             tabPane.getTabs().add(blackTab);
             controlPanel.getChildren().add(tabPane);
-            updateBoardDisplay(new char[rows][columns]);
-            applyTransition(tabPane);
 
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < columns; j++) {
-                    int row = i, col = j;
-                    Rectangle cell = (Rectangle) boardGrid.getChildren().get(i * columns + j);
-                    cell.setOnMouseEntered(e -> cell.setEffect(new DropShadow(10, Color.valueOf("#2196F3"))));
-                    cell.setOnMouseExited(e -> cell.setEffect(null));
-                    cell.setOnMouseClicked(e -> {
-                        if (blackSquares.contains(new int[]{row, col})) {
-                            blackSquares.removeIf(pos -> pos[0] == row && pos[1] == col);
-                            applyFadeEffect(cell, Color.WHITE);
-                        } else {
-                            blackSquares.add(new int[]{row, col});
-                            applyFadeEffect(cell, Color.GRAY);
-                        }
-                    });
-                }
-            }
-
-            confirmButton.setOnAction(e -> future.complete(new ArrayList<>(blackSquares)));
+            confirmButton.setOnAction(e -> {
+                System.out.println("Confirm button clicked for black squares");
+                boardUI.completeBlackSquaresPrompt();
+            });
         });
         return future.join();
     }
 
     @Override
     public int[][] promptPlayerPositions(int rows, int columns) {
-        CompletableFuture<int[][]> future = new CompletableFuture<>();
+        if (boardUI == null) {
+            System.err.println("Error: BoardUI not initialized");
+            messageArea.updateMessage("Error: Board not initialized. Please set board size first.", MessageArea.MessageType.ERROR);
+            return new int[][]{{-1, -1}, {-1, -1}};
+        }
+        CompletableFuture<int[][]> future = boardUI.promptPlayerPositions();
         Platform.runLater(() -> {
             controlPanel.getChildren().clear();
             TabPane tabPane = new TabPane();
@@ -171,60 +151,14 @@ public class JavaFXGameIO implements GameIO {
             posTab.setContent(posContent);
             tabPane.getTabs().add(posTab);
             controlPanel.getChildren().add(tabPane);
-            char[][] tempBoard = new char[rows][columns];
-            for (int[] pos : blackSquares) {
-                tempBoard[pos[0]][pos[1]] = '*';
-            }
-            updateBoardDisplay(tempBoard);
-            applyTransition(tabPane);
-
-            int[] playerA = {-1, -1};
-            int[] playerB = {-1, -1};
-            boolean[] selectingPlayerA = {true};
-
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < columns; j++) {
-                    int row = i, col = j;
-                    Rectangle cell = (Rectangle) boardGrid.getChildren().get(i * columns + j);
-                    cell.setOnMouseEntered(e -> cell.setEffect(new DropShadow(10, Color.valueOf("#2196F3"))));
-                    cell.setOnMouseExited(e -> cell.setEffect(null));
-                    cell.setOnMouseClicked(e -> {
-                        if (tempBoard[row][col] == '*') {
-                            messageArea.updateMessage("Cannot place player on black square.", MessageArea.MessageType.ERROR);
-                            return;
-                        }
-                        if (selectingPlayerA[0]) {
-                            if (playerA[0] != -1) {
-                                Rectangle oldCell = (Rectangle) boardGrid.getChildren().get(playerA[0] * columns + playerA[1]);
-                                applyFadeEffect(oldCell, tempBoard[playerA[0]][playerA[1]] == '*' ? Color.GRAY : Color.WHITE);
-                            }
-                            playerA[0] = row;
-                            playerA[1] = col;
-                            applyFadeEffect(cell, Color.RED);
-                            selectingPlayerA[0] = false;
-                            instruction.setText("Click to set Player B (blue):");
-                        } else {
-                            if (row == playerA[0] && col == playerA[1]) {
-                                messageArea.updateMessage("Players cannot share position.", MessageArea.MessageType.ERROR);
-                                return;
-                            }
-                            if (playerB[0] != -1) {
-                                Rectangle oldCell = (Rectangle) boardGrid.getChildren().get(playerB[0] * columns + playerB[1]);
-                                applyFadeEffect(oldCell, tempBoard[playerB[0]][playerB[1]] == '*' ? Color.GRAY : Color.WHITE);
-                            }
-                            playerB[0] = row;
-                            playerB[1] = col;
-                            applyFadeEffect(cell, Color.BLUE);
-                        }
-                    });
-                }
-            }
 
             confirmButton.setOnAction(e -> {
-                if (playerA[0] == -1 || playerB[0] == -1) {
+                System.out.println("Confirm button clicked for player positions");
+                int[][] positions = boardUI.promptPlayerPositions().join();
+                if (positions[0][0] == -1 || positions[1][0] == -1) {
                     messageArea.updateMessage("Please set positions for both players.", MessageArea.MessageType.ERROR);
                 } else {
-                    future.complete(new int[][]{{playerA[0], playerA[1]}, {playerB[0], playerB[1]}});
+                    future.complete(positions);
                 }
             });
         });
@@ -253,20 +187,15 @@ public class JavaFXGameIO implements GameIO {
                 new Label("Select your move:"), directionCombo, lengthSlider, moveButton
             );
             controlPanel.getChildren().add(moveContent);
-            applyTransition(moveContent);
             messageArea.updateMessage("Your turn to move", MessageArea.MessageType.NEUTRAL);
 
             moveButton.setOnAction(e -> {
-                System.out.println("Move button clicked"); // Debug
                 String directionStr = directionCombo.getValue();
                 int length = (int) lengthSlider.getValue();
-                System.out.println("Direction: " + directionStr + ", Length: " + length); // Debug
                 Direction direction = Direction.fromString(directionStr);
                 if (direction == null || length <= 0) {
                     messageArea.updateMessage("Please select a valid direction and length.", MessageArea.MessageType.ERROR);
-                    System.out.println("Invalid move: direction=" + direction + ", length=" + length); // Debug
                 } else {
-                    System.out.println("Completing future with direction=" + direction + ", length=" + length); // Debug
                     future.complete(new Pair<>(direction, length));
                 }
             });
@@ -285,7 +214,6 @@ public class JavaFXGameIO implements GameIO {
     @Override
     public void displayMessage(String message) {
         Platform.runLater(() -> {
-            System.out.println("Display message: " + message); // Debug
             MessageArea.MessageType type = message.toLowerCase().contains("calculating") ? 
                 MessageArea.MessageType.NEUTRAL : MessageArea.MessageType.NEUTRAL;
             messageArea.updateMessage(message, type);
@@ -294,7 +222,14 @@ public class JavaFXGameIO implements GameIO {
 
     @Override
     public void displayBoard(BoardState state) {
-        Platform.runLater(() -> updateBoardDisplay(state.getBoard()));
+        Platform.runLater(() -> {
+            if (boardUI == null) {
+                System.err.println("Error: BoardUI not initialized for displayBoard");
+                messageArea.updateMessage("Error: Board not initialized.", MessageArea.MessageType.ERROR);
+                return;
+            }
+            boardUI.renderBoard(state);
+        });
     }
 
     @Override
@@ -323,65 +258,7 @@ public class JavaFXGameIO implements GameIO {
                 direction.toString().toLowerCase(), length, result.getMessage(),
                 result.getPreposition() != null ? result.getPreposition() : "at", failureY, failureX);
             messageArea.updateMessage(message, MessageArea.MessageType.ERROR);
-            FadeTransition fade = new FadeTransition(Duration.millis(500), messageArea.getMessageLabel());
-            fade.setFromValue(0);
-            fade.setToValue(1);
-            fade.play();
         });
-    }
-
-    private void updateBoardDisplay(char[][] board) {
-        boardGrid.getChildren().clear();
-        double cellSize = Math.min(600.0 / Math.max(board.length, board[0].length), 60.0);
-        for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board[0].length; j++) {
-                Rectangle cell = new Rectangle(cellSize, cellSize);
-                cell.setArcWidth(10);
-                cell.setArcHeight(10);
-                switch (board[i][j]) {
-                    case '*': applyFadeEffect(cell, Color.GRAY); break;
-                    case 'A': applyFadeEffect(cell, Color.RED); break;
-                    case 'B': applyFadeEffect(cell, Color.BLUE); break;
-                    default: applyFadeEffect(cell, Color.WHITE); break;
-                }
-                cell.setStroke(Color.BLACK);
-                cell.setStrokeWidth(1);
-                boardGrid.add(cell, j, i);
-            }
-        }
-    }
-
-    private void applyTransition(Node node) {
-        switch (transitionType) {
-            case FADE:
-                FadeTransition fade = new FadeTransition(Duration.millis(transitionDuration), node);
-                fade.setFromValue(0);
-                fade.setToValue(1);
-                fade.play();
-                break;
-            case SLIDE:
-                TranslateTransition slide = new TranslateTransition(Duration.millis(transitionDuration), node);
-                slide.setFromX(-300);
-                slide.setToX(0);
-                slide.play();
-                break;
-            case SCALE:
-                ScaleTransition scale = new ScaleTransition(Duration.millis(transitionDuration), node);
-                scale.setFromX(0.5);
-                scale.setFromY(0.5);
-                scale.setToX(1);
-                scale.setToY(1);
-                scale.play();
-                break;
-        }
-    }
-
-    private void applyFadeEffect(Rectangle cell, Color color) {
-        cell.setFill(color);
-        FadeTransition fade = new FadeTransition(Duration.millis(300), cell);
-        fade.setFromValue(0.5);
-        fade.setToValue(1);
-        fade.play();
     }
 
     @Override
@@ -390,10 +267,6 @@ public class JavaFXGameIO implements GameIO {
         Platform.runLater(() -> {
             messageArea.updateMessage(message, type);
             controlPanel.getChildren().clear();
-            FadeTransition fade = new FadeTransition(Duration.millis(500), messageArea.getMessageLabel());
-            fade.setFromValue(0);
-            fade.setToValue(1);
-            fade.play();
             future.complete(null);
         });
         return future;

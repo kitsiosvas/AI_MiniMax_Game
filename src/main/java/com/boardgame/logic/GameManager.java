@@ -86,6 +86,10 @@ public class GameManager {
             );
             gameIO.displayBoard(currentState);
             evaluationResult = logic.evaluate(currentState, 1);
+            if (evaluationResult != -100) {
+                gameIO.displayGameFinished(evaluationResult).join();
+                break;
+            }
         } while (evaluationResult == -100);
     }
 

@@ -116,6 +116,18 @@
     -fx-background-color: #2A2A2A;
 }
 
+.cell {
+    -fx-stroke: black;
+    -fx-stroke-width: 1;
+    -fx-arc-width: 10;
+    -fx-arc-height: 10;
+    -fx-fill: white;
+}
+
+.cell:hover {
+    -fx-effect: dropshadow(gaussian, #2196F3, 10, 0, 0, 0);
+}
+
 .black-square {
     -fx-fill: gray;
 }
