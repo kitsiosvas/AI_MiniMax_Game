@@ -68,22 +68,9 @@ public class GameManager {
             gameIO.displayMessage("Calculating my move...");
             Pair<Integer, BoardState> result = minimax(currentState, 10, true);
             currentState = result.getSecond();
-
-            // Check if Player B's position changed
-            if (currentState.getPlayerBX() != originalBX || currentState.getPlayerBY() != originalBY) {
-                gameIO.displayMessage("Error: Player B moved unexpectedly to (" + currentState.getPlayerBX() + "," + currentState.getPlayerBY() + ")");
-                // Revert to original state
-                currentState = new BoardState(currentState.getRows(), currentState.getColumns());
-                currentState.setBoard(result.getSecond().getBoard());
-                currentState.setPlayerBPosition(originalBX, originalBY);
-                currentState.setBoardCell(originalBY, originalBX, 'B');
-            }
-
             gameIO.displayBoard(currentState);
             evaluationResult = logic.evaluate(currentState, 2);
-            if (evaluationResult != -100) {
-                break;
-            }
+            if (evaluationResult != -100) { break; }
 
             // Human move (unchanged)
             Pair<Direction, Integer> move = gameIO.promptPlayerMove();
