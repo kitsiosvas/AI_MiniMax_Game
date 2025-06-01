@@ -1,4 +1,5 @@
 package com.boardgame.ui;
+
 import com.boardgame.io.JavaFXGameIO;
 import com.boardgame.logic.GameManager;
 
@@ -36,14 +37,13 @@ public class MainUI extends Application {
             System.out.println("Loaded styles.css for gameScene");
         }
 
-        // Initialize GameIO with callback
+        // Initialize GameIO with callbacks
         gameIO = new JavaFXGameIO(
             primaryStage,
             gameScreen.getBoardGrid(),
             gameScreen.getMessageArea(),
             gameScreen.getControlPanel(),
-            () -> switchScene(primaryStage, welcomeScene)
-        );
+            () -> switchScene(primaryStage, welcomeScene));
 
         // Scene Switching and Game Control
         welcomeScreen.getstartGameButton().setOnAction(e -> {
@@ -51,10 +51,19 @@ public class MainUI extends Application {
             switchScene(primaryStage, gameScene);
         });
 
-        gameScreen.getNewGameButton().setOnAction(e -> {
+        gameScreen.getMainMenuButton().setOnAction(e -> {
             stopCurrentGame();
             gameIO.reset();
             switchScene(primaryStage, welcomeScene);
+        });
+
+        gameScreen.getNewGameButton().setOnAction(e -> {
+            stopCurrentGame();
+            gameIO.reset();
+            GameManager gameManager = new GameManager(gameIO);
+            gameThread = new Thread(() -> gameManager.startGame());
+            gameThread.setDaemon(true);
+            gameThread.start();
         });
 
         // Initial Scene Setup
@@ -70,8 +79,7 @@ public class MainUI extends Application {
             gameScreen.getBoardGrid(),
             gameScreen.getMessageArea(),
             gameScreen.getControlPanel(),
-            () -> switchScene(stage, welcomeScene)
-        );
+            () -> switchScene(stage, welcomeScene));
         GameManager gameManager = new GameManager(gameIO);
         gameThread = new Thread(() -> gameManager.startGame());
         gameThread.setDaemon(true);

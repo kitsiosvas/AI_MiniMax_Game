@@ -1,4 +1,5 @@
 package com.boardgame.ui;
+
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -43,6 +44,10 @@ public class GameScreen {
 
     public MessageArea getMessageArea() {
         return messageArea;
+    }
+
+    public Button getMainMenuButton() {
+        return toolbar.getMainMenuButton();
     }
 
     public Button getNewGameButton() {
