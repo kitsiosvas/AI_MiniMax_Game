@@ -8,7 +8,7 @@ import javafx.util.Duration;
 
 public class WelcomeScreen {
     private final VBox root;
-    private final Button startButton;
+    private final Button startGameButton;
 
     public WelcomeScreen() {
         root = new VBox(20);
@@ -18,10 +18,10 @@ public class WelcomeScreen {
         Label title = new Label("Board Game");
         title.setId("title");
 
-        startButton = new Button("Start Game");
-        startButton.setId("action-button");
+        startGameButton = new Button("Start Game");
+        startGameButton.setId("action-button");
 
-        root.getChildren().addAll(title, startButton);
+        root.getChildren().addAll(title, startGameButton);
 
         // Welcome Animation
         FadeTransition fade = new FadeTransition(Duration.millis(1000), title);
@@ -34,7 +34,7 @@ public class WelcomeScreen {
         return root;
     }
 
-    public Button getStartButton() {
-        return startButton;
+    public Button getstartGameButton() {
+        return startGameButton;
     }
 }

@@ -292,6 +292,7 @@ public class JavaFXGameIO implements GameIO {
                 if (e.getCode() == KeyCode.ESCAPE) {
                     boardGrid.setOnMouseClicked(null); // Remove handler
                     primaryStage.getScene().setOnKeyPressed(null); // Remove key handler
+                    reset(); // Clear board and UI state
                     Platform.runLater(switchToWelcomeScene);
                     future.complete(false);
                 }

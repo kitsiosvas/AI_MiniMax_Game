@@ -46,7 +46,7 @@ public class MainUI extends Application {
         );
 
         // Scene Switching and Game Control
-        welcomeScreen.getStartButton().setOnAction(e -> {
+        welcomeScreen.getstartGameButton().setOnAction(e -> {
             startNewGame(primaryStage, gameScreen);
             switchScene(primaryStage, gameScene);
         });
