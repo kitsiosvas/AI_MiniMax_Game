@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-public class BoardUI implements IBoardUI {
+public class BoardUI {
     private final GridPane gridPane;
     private final Stage stage;
     private final MessageArea messageArea;
@@ -77,7 +77,6 @@ public class BoardUI implements IBoardUI {
         }
     }
 
-    @Override
     public void renderBoard(BoardState state) {
         Platform.runLater(() -> {
             for (int i = 0; i < rows; i++) {
@@ -96,7 +95,6 @@ public class BoardUI implements IBoardUI {
         });
     }
 
-    @Override
     public CompletableFuture<List<int[]>> promptBlackSquares() {
         blackSquaresFuture = new CompletableFuture<>();
         Platform.runLater(() -> {
@@ -149,7 +147,6 @@ public class BoardUI implements IBoardUI {
         });
     }
 
-    @Override
     public CompletableFuture<int[][]> promptPlayerPositions() {
         CompletableFuture<int[][]> future = new CompletableFuture<>();
         Platform.runLater(() -> {
@@ -220,12 +217,10 @@ public class BoardUI implements IBoardUI {
         return future;
     }
 
-    @Override
     public void highlightCells(List<int[]> positions) {
         // Placeholder for future valid move highlighting
     }
 
-    @Override
     public void clearBoard() {
         Platform.runLater(() -> {
             for (int i = 0; i < rows; i++) {
@@ -244,7 +239,6 @@ public class BoardUI implements IBoardUI {
         });
     }
 
-    @Override
     public CompletableFuture<Pair<Direction, Integer>> promptPlayerMove() {
         // Placeholder for future click-based move input
         return new CompletableFuture<>();

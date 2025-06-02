@@ -1,6 +1,6 @@
 package com.boardgame.io;
 
-import com.boardgame.ui.IBoardUI;
+import com.boardgame.ui.BoardUI;
 import com.boardgame.ui.BoardUI;
 import com.boardgame.ui.MessageArea;
 import com.boardgame.logic.BoardState;
