@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CancellationException;
 
 public class BoardUI {
     private final GridPane gridPane;
@@ -26,8 +27,9 @@ public class BoardUI {
     private final Map<Character, String> stateToStyle;
     private List<int[]> blackSquares;
     private CompletableFuture<List<int[]>> blackSquaresFuture;
-    private enum InteractionMode { NONE, PLACING_BLACK_SQUARES, SETTING_PLAYER_A, SETTING_PLAYER_B }
+    private CompletableFuture<int[][]> playerPositionsFuture;
 
+    private enum InteractionMode { NONE, PLACING_BLACK_SQUARES, SETTING_PLAYER_A, SETTING_PLAYER_B }
     private InteractionMode currentMode = InteractionMode.NONE;
 
     public BoardUI(Stage stage, GridPane gridPane, MessageArea messageArea, int rows, int columns) {
@@ -44,7 +46,7 @@ public class BoardUI {
     }
 
     private void initializeStyleMap() {
-        stateToStyle.put(' ', ""); // Empty: default white
+        stateToStyle.put(' ', "");
         stateToStyle.put('*', "black-square");
         stateToStyle.put('A', "player-a");
         stateToStyle.put('B', "player-b");
@@ -105,7 +107,7 @@ public class BoardUI {
                 for (int j = 0; j < columns; j++) {
                     int row = i, col = j;
                     StackPane cell = cells[i][j];
-                    cell.setOnMouseClicked(null); // Clear existing handlers
+                    cell.setOnMouseClicked(null);
                     cell.setOnMouseClicked(e -> {
                         if (currentMode != InteractionMode.PLACING_BLACK_SQUARES) return;
                         Platform.runLater(() -> {
@@ -137,7 +139,7 @@ public class BoardUI {
                 currentMode = InteractionMode.NONE;
                 for (int i = 0; i < rows; i++) {
                     for (int j = 0; j < columns; j++) {
-                        cells[i][j].setOnMouseClicked(null); // Clear click handlers
+                        cells[i][j].setOnMouseClicked(null);
                     }
                 }
                 if (blackSquaresFuture != null && !blackSquaresFuture.isDone()) {
@@ -148,7 +150,7 @@ public class BoardUI {
     }
 
     public CompletableFuture<int[][]> promptPlayerPositions() {
-        CompletableFuture<int[][]> future = new CompletableFuture<>();
+        playerPositionsFuture = new CompletableFuture<>();
         Platform.runLater(() -> {
             int[] playerA = {-1, -1};
             int[] playerB = {-1, -1};
@@ -159,7 +161,7 @@ public class BoardUI {
                 for (int j = 0; j < columns; j++) {
                     int row = i, col = j;
                     StackPane cell = cells[i][j];
-                    cell.setOnMouseClicked(null); // Clear existing handlers
+                    cell.setOnMouseClicked(null);
                     cell.setOnMouseClicked(e -> {
                         Platform.runLater(() -> {
                             if (currentMode == InteractionMode.SETTING_PLAYER_A) {
@@ -203,21 +205,41 @@ public class BoardUI {
                                 currentMode = InteractionMode.NONE;
                                 for (int k = 0; k < rows; k++) {
                                     for (int l = 0; l < columns; l++) {
-                                        cells[k][l].setOnMouseClicked(null); // Clear click handlers
+                                        cells[k][l].setOnMouseClicked(null);
                                     }
                                 }
-                                future.complete(new int[][]{{playerA[0], playerA[1]}, {playerB[0], playerB[1]}});
+                                if (!playerPositionsFuture.isDone()) {
+                                    playerPositionsFuture.complete(new int[][]{{playerA[0], playerA[1]}, {playerB[0], playerB[1]}});
+                                }
                             }
                         });
                     });
                 }
             }
-            future.completeOnTimeout(new int[][]{{playerA[0], playerA[1]}, {playerB[0], playerB[1]}}, 60000, java.util.concurrent.TimeUnit.MILLISECONDS);
+            playerPositionsFuture.completeOnTimeout(new int[][]{{playerA[0], playerA[1]}, {playerB[0], playerB[1]}}, 60000, java.util.concurrent.TimeUnit.MILLISECONDS);
         });
-        return future;
+        return playerPositionsFuture;
     }
 
-    public void highlightCells(List<int[]> positions) {
+    public void cancelPrompts() {
+        Platform.runLater(() -> {
+            currentMode = InteractionMode.NONE;
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < columns; j++) {
+                    cells[i][j].setOnMouseClicked(null);
+                }
+            }
+            if (blackSquaresFuture != null && !blackSquaresFuture.isDone()) {
+                blackSquaresFuture.completeExceptionally(new CancellationException("Black squares prompt cancelled"));
+            }
+            if (playerPositionsFuture != null && !playerPositionsFuture.isDone()) {
+                playerPositionsFuture.complete(null); // Complete with null to indicate invalid
+            }
+            clearBoard();
+        });
+    }
+
+    public void highlightCells(int screenSize) {
         // Placeholder for future valid move highlighting
     }
 
@@ -234,13 +256,15 @@ public class BoardUI {
             blackSquares.clear();
             currentMode = InteractionMode.NONE;
             if (blackSquaresFuture != null && !blackSquaresFuture.isDone()) {
-                blackSquaresFuture.complete(new ArrayList<>());
+                blackSquaresFuture.complete(null);
+            }
+            if (playerPositionsFuture != null && !playerPositionsFuture.isDone()) {
+                playerPositionsFuture.complete(null);
             }
         });
     }
 
     public CompletableFuture<Pair<Direction, Integer>> promptPlayerMove() {
-        // Placeholder for future click-based move input
         return new CompletableFuture<>();
     }
 }

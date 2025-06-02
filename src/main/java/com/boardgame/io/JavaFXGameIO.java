@@ -1,7 +1,6 @@
 package com.boardgame.io;
 
 import com.boardgame.ui.BoardUI;
-import com.boardgame.ui.BoardUI;
 import com.boardgame.ui.MessageArea;
 import com.boardgame.logic.BoardState;
 import com.boardgame.logic.Direction;
@@ -46,7 +45,7 @@ public class JavaFXGameIO implements GameIO {
             controlPanel.getChildren().clear();
             messageArea.updateMessage("== Java program started ==", MessageArea.MessageType.NEUTRAL);
             if (boardUI != null) {
-                boardUI.clearBoard();
+                boardUI.cancelPrompts(); // Changed to cancelPrompts to ensure futures are completed
             }
         });
     }

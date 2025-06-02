@@ -2,9 +2,12 @@ package com.boardgame.logic;
 
 import com.boardgame.io.GameIO;
 import com.boardgame.io.JavaFXGameIO;
+import javafx.concurrent.Task;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 
 public class GameManager {
     private final GameIO gameIO;
@@ -12,11 +15,16 @@ public class GameManager {
     private int columns;
     private List<int[]> blackSquares;
     private final GameLogic logic;
+    private Task<Void> task;
 
     public GameManager(GameIO gameIO) {
         this.gameIO = gameIO;
         this.blackSquares = new ArrayList<>();
         this.logic = new GameLogic();
+    }
+
+    public void setTask(Task<Void> task) {
+        this.task = task;
     }
 
     public void startNewGame() {
@@ -27,14 +35,22 @@ public class GameManager {
 
     private BoardState setupGame() {
         int[] size = gameIO.promptBoardSize();
+        if (task != null && task.isCancelled()) return null;
         rows = size[0];
         columns = size[1];
-        blackSquares = gameIO.promptBlackSquares(rows, columns);
+        try {
+            blackSquares = gameIO.promptBlackSquares(rows, columns);
+        } catch (CancellationException e) {
+            System.out.println("Black squares prompt cancelled: " + e.getMessage());
+            return null; // Exit if prompt was cancelled
+        }
+        if (task != null && task.isCancelled()) return null;
         return promptPlayerPositionsAndInitBoard();
     }
 
     private BoardState promptPlayerPositionsAndInitBoard() {
         int[][] positions = gameIO.promptPlayerPositions(rows, columns);
+        if (task != null && task.isCancelled()) return null;
         char[][] board = new char[rows][columns];
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < columns; j++) {
@@ -50,15 +66,19 @@ public class GameManager {
     }
 
     private void runGameLoop(BoardState currentState) {
+        if (currentState == null) return; // Early exit if cancelled during setup
         int evaluationResult;
 
         gameIO.displayMessage("STARTING POSITION:");
         gameIO.displayBoard(currentState);
 
         do {
+            if (task != null && task.isCancelled()) return;
+
             // AI move
             gameIO.displayMessage("Calculating my move...");
             Pair<Integer, BoardState> result = minimax(currentState, 10, true);
+            if (task != null && task.isCancelled()) return;
             currentState = result.getSecond();
             gameIO.displayBoard(currentState);
             evaluationResult = logic.evaluate(currentState, 2);
@@ -69,6 +89,7 @@ public class GameManager {
 
             // Human move
             Pair<Direction, Integer> move = gameIO.promptPlayerMove();
+            if (task != null && task.isCancelled()) return;
             Direction direction = move.getFirst();
             int length = move.getSecond();
             Pair<MoveResult, int[]> moveResult = logic.isValidMove(
@@ -94,6 +115,10 @@ public class GameManager {
     }
 
     private Pair<Integer, BoardState> minimax(BoardState state, int depth, boolean isMax) {
+        if (task != null && task.isCancelled()) {
+            return new Pair<>(Integer.MIN_VALUE, new BoardState(state.getBoard()));
+        }
+
         int evaluationResult = logic.evaluate(state, isMax ? 1 : 2);
 
         if (depth == 0 || evaluationResult != -100) {
@@ -112,6 +137,9 @@ public class GameManager {
 
         for (BoardState child : children) {
             Pair<Integer, BoardState> result = minimax(child, depth - 1, !isMax);
+            if (task != null && task.isCancelled()) {
+                return new Pair<>(Integer.MIN_VALUE, new BoardState(state.getBoard()));
+            }
             int score = result.getFirst();
             if (isMax) {
                 if (score > bestScore) {
@@ -126,7 +154,6 @@ public class GameManager {
             }
         }
 
-        // Fallback to input state if no valid move found
         if (bestChildState == null) {
             bestChildState = new BoardState(state.getBoard());
         }

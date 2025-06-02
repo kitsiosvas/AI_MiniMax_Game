@@ -2,16 +2,16 @@ package com.boardgame.ui;
 
 import com.boardgame.io.JavaFXGameIO;
 import com.boardgame.logic.GameManager;
-
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class MainUI extends Application {
     private Scene welcomeScene;
     private Scene gameScene;
-    private Thread gameThread;
+    private Task<Void> gameTask; // Changed from Thread to Task
     private JavaFXGameIO gameIO;
 
     @Override
@@ -60,10 +60,7 @@ public class MainUI extends Application {
         gameScreen.getNewGameButton().setOnAction(e -> {
             stopCurrentGame();
             gameIO.reset();
-            GameManager gameManager = new GameManager(gameIO);
-            gameThread = new Thread(() -> gameManager.startNewGame());
-            gameThread.setDaemon(true);
-            gameThread.start();
+            startNewGame(primaryStage, gameScreen);
         });
 
         // Initial Scene Setup
@@ -81,21 +78,40 @@ public class MainUI extends Application {
             gameScreen.getControlPanel(),
             () -> switchScene(stage, welcomeScene));
         GameManager gameManager = new GameManager(gameIO);
-        gameThread = new Thread(() -> gameManager.startNewGame());
-        gameThread.setDaemon(true);
-        gameThread.start();
+        gameTask = new Task<Void>() {
+            @Override
+            protected Void call() {
+                gameManager.startNewGame();
+                return null;
+            }
+
+            @Override
+            protected void failed() {
+                Platform.runLater(() -> {
+                    gameIO.displayMessage("Game failed: " + getException().getMessage());
+                    gameIO.reset();
+                });
+            }
+
+            @Override
+            protected void cancelled() {
+                Platform.runLater(() -> gameIO.reset());
+            }
+        };
+        gameTask.setOnFailed(e -> gameTask.getException().printStackTrace());
+        new Thread(gameTask).start();
     }
 
     private void stopCurrentGame() {
-        if (gameThread != null && gameThread.isAlive()) {
-            gameThread.interrupt();
+        if (gameTask != null && !gameTask.isDone()) {
+            gameTask.cancel();
             try {
-                gameThread.join(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+                gameTask.get(); // Wait for cancellation to complete
+            } catch (Exception e) {
+                // Ignore, as cancellation is expected
             }
         }
-        gameThread = null;
+        gameTask = null;
     }
 
     private void switchScene(Stage stage, Scene newScene) {
