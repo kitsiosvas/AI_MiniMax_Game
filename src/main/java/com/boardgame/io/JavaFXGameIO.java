@@ -4,6 +4,7 @@ import com.boardgame.ui.BoardUI;
 import com.boardgame.ui.MessageArea;
 import com.boardgame.logic.BoardState;
 import com.boardgame.logic.Direction;
+import com.boardgame.logic.GameManager;
 import com.boardgame.logic.GameLogic;
 import com.boardgame.logic.MoveResult;
 import com.boardgame.logic.Pair;
@@ -27,6 +28,7 @@ public class JavaFXGameIO implements GameIO {
     private int columns;
     private List<int[]> blackSquares;
     private BoardUI boardUI;
+    private final GameManager gameManager;
 
     public JavaFXGameIO(Stage stage, GridPane boardGrid, MessageArea messageArea, VBox controlPanel, Runnable switchToWelcomeScene) {
         this.primaryStage = stage;
@@ -35,6 +37,7 @@ public class JavaFXGameIO implements GameIO {
         this.controlPanel = controlPanel;
         this.switchToWelcomeScene = switchToWelcomeScene;
         this.blackSquares = new ArrayList<>();
+        this.gameManager = new GameManager(this);
     }
 
     public void reset() {
@@ -45,7 +48,8 @@ public class JavaFXGameIO implements GameIO {
             controlPanel.getChildren().clear();
             messageArea.updateMessage("== Java program started ==", MessageArea.MessageType.NEUTRAL);
             if (boardUI != null) {
-                boardUI.cancelPrompts(); // Changed to cancelPrompts to ensure futures are completed
+                boardUI.cancelPrompts();
+                boardUI = null;
             }
         });
     }
@@ -76,6 +80,10 @@ public class JavaFXGameIO implements GameIO {
             controlPanel.getChildren().add(tabPane);
 
             submitButton.setOnAction(e -> {
+                if (gameManager.getIsGameCancelled().get()) {
+                    future.complete(null);
+                    return;
+                }
                 try {
                     int rows = Integer.parseInt(rowsField.getText());
                     int cols = Integer.parseInt(colsField.getText());
@@ -84,7 +92,7 @@ public class JavaFXGameIO implements GameIO {
                     } else {
                         this.rows = rows;
                         this.columns = cols;
-                        this.boardUI = new BoardUI(primaryStage, boardGrid, messageArea, rows, cols);
+                        this.boardUI = new BoardUI(primaryStage, boardGrid, messageArea, rows, cols, gameManager);
                         System.out.println("BoardUI initialized with size " + rows + "x" + cols);
                         future.complete(new int[]{rows, cols});
                     }
@@ -121,6 +129,10 @@ public class JavaFXGameIO implements GameIO {
             controlPanel.getChildren().add(tabPane);
 
             confirmButton.setOnAction(e -> {
+                if (gameManager.getIsGameCancelled().get()) {
+                    future.complete(null);
+                    return;
+                }
                 System.out.println("Confirm button clicked for black squares");
                 boardUI.completeBlackSquaresPrompt();
             });
@@ -152,6 +164,10 @@ public class JavaFXGameIO implements GameIO {
             controlPanel.getChildren().add(tabPane);
 
             confirmButton.setOnAction(e -> {
+                if (gameManager.getIsGameCancelled().get()) {
+                    future.complete(null);
+                    return;
+                }
                 System.out.println("Confirm button clicked for player positions");
                 int[][] positions = boardUI.promptPlayerPositions().join();
                 if (positions[0][0] == -1 || positions[1][0] == -1) {
@@ -189,6 +205,10 @@ public class JavaFXGameIO implements GameIO {
             messageArea.updateMessage("Your turn to move", MessageArea.MessageType.NEUTRAL);
 
             moveButton.setOnAction(e -> {
+                if (gameManager.getIsGameCancelled().get()) {
+                    future.complete(null);
+                    return;
+                }
                 String directionStr = directionCombo.getValue();
                 int length = (int) lengthSlider.getValue();
                 Direction direction = Direction.fromString(directionStr);
@@ -213,7 +233,7 @@ public class JavaFXGameIO implements GameIO {
     @Override
     public void displayMessage(String message) {
         Platform.runLater(() -> {
-            MessageArea.MessageType type = message.toLowerCase().contains("calculating") ? 
+            MessageArea.MessageType type = message.toLowerCase().contains("calculating") ?
                 MessageArea.MessageType.NEUTRAL : MessageArea.MessageType.NEUTRAL;
             messageArea.updateMessage(message, type);
         });

@@ -2,8 +2,8 @@ package com.boardgame.ui;
 
 import com.boardgame.logic.BoardState;
 import com.boardgame.logic.Direction;
+import com.boardgame.logic.GameManager;
 import com.boardgame.logic.Pair;
-import com.boardgame.ui.MessageArea;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.layout.GridPane;
@@ -28,11 +28,12 @@ public class BoardUI {
     private List<int[]> blackSquares;
     private CompletableFuture<List<int[]>> blackSquaresFuture;
     private CompletableFuture<int[][]> playerPositionsFuture;
+    private final GameManager gameManager;
 
     private enum InteractionMode { NONE, PLACING_BLACK_SQUARES, SETTING_PLAYER_A, SETTING_PLAYER_B }
     private InteractionMode currentMode = InteractionMode.NONE;
 
-    public BoardUI(Stage stage, GridPane gridPane, MessageArea messageArea, int rows, int columns) {
+    public BoardUI(Stage stage, GridPane gridPane, MessageArea messageArea, int rows, int columns, GameManager gameManager) {
         this.stage = stage;
         this.gridPane = gridPane;
         this.messageArea = messageArea;
@@ -41,6 +42,7 @@ public class BoardUI {
         this.cells = new StackPane[rows][columns];
         this.blackSquares = new ArrayList<>();
         this.stateToStyle = new HashMap<>();
+        this.gameManager = gameManager;
         initializeStyleMap();
         initializeBoard();
     }
@@ -109,7 +111,9 @@ public class BoardUI {
                     StackPane cell = cells[i][j];
                     cell.setOnMouseClicked(null);
                     cell.setOnMouseClicked(e -> {
-                        if (currentMode != InteractionMode.PLACING_BLACK_SQUARES) return;
+                        if (gameManager.getIsGameCancelled().get() || currentMode != InteractionMode.PLACING_BLACK_SQUARES) {
+                            return;
+                        }
                         Platform.runLater(() -> {
                             int[] pos = new int[]{row, col};
                             Rectangle rect = (Rectangle) cell.getChildren().get(0);
@@ -135,16 +139,18 @@ public class BoardUI {
 
     public void completeBlackSquaresPrompt() {
         Platform.runLater(() -> {
-            if (currentMode == InteractionMode.PLACING_BLACK_SQUARES) {
-                currentMode = InteractionMode.NONE;
-                for (int i = 0; i < rows; i++) {
-                    for (int j = 0; j < columns; j++) {
-                        cells[i][j].setOnMouseClicked(null);
-                    }
+            if (gameManager.getIsGameCancelled().get()) {
+                blackSquaresFuture.complete(null);
+                return;
+            }
+            currentMode = InteractionMode.NONE;
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < columns; j++) {
+                    cells[i][j].setOnMouseClicked(null);
                 }
-                if (blackSquaresFuture != null && !blackSquaresFuture.isDone()) {
-                    blackSquaresFuture.complete(new ArrayList<>(blackSquares));
-                }
+            }
+            if (blackSquaresFuture != null && !blackSquaresFuture.isDone()) {
+                blackSquaresFuture.complete(new ArrayList<>(blackSquares));
             }
         });
     }
@@ -163,6 +169,9 @@ public class BoardUI {
                     StackPane cell = cells[i][j];
                     cell.setOnMouseClicked(null);
                     cell.setOnMouseClicked(e -> {
+                        if (gameManager.getIsGameCancelled().get()) {
+                            return;
+                        }
                         Platform.runLater(() -> {
                             if (currentMode == InteractionMode.SETTING_PLAYER_A) {
                                 if (blackSquares.stream().anyMatch(p -> p[0] == row && p[1] == col)) {
@@ -229,13 +238,13 @@ public class BoardUI {
                     cells[i][j].setOnMouseClicked(null);
                 }
             }
+            clearBoard();
             if (blackSquaresFuture != null && !blackSquaresFuture.isDone()) {
-                blackSquaresFuture.completeExceptionally(new CancellationException("Black squares prompt cancelled"));
+                blackSquaresFuture.complete(null);
             }
             if (playerPositionsFuture != null && !playerPositionsFuture.isDone()) {
-                playerPositionsFuture.complete(null); // Complete with null to indicate invalid
+                playerPositionsFuture.complete(null);
             }
-            clearBoard();
         });
     }
 

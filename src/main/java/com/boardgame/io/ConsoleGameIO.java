@@ -16,6 +16,11 @@ import com.boardgame.logic.Pair;
 public class ConsoleGameIO implements GameIO {
     private final Scanner scanner;
 
+    @Override
+    public void reset() {
+        // No state to reset for ConsoleGameIO, method implemented as required by interface.
+    }
+
     public ConsoleGameIO(Scanner scanner) {
         this.scanner = scanner;
     }

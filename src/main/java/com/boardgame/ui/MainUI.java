@@ -4,15 +4,15 @@ import com.boardgame.io.JavaFXGameIO;
 import com.boardgame.logic.GameManager;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.concurrent.Task;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class MainUI extends Application {
     private Scene welcomeScene;
     private Scene gameScene;
-    private Task<Void> gameTask; // Changed from Thread to Task
+    private GameService gameService;
     private JavaFXGameIO gameIO;
+    private GameManager gameManager;
 
     @Override
     public void start(Stage primaryStage) {
@@ -71,47 +71,77 @@ public class MainUI extends Application {
 
     private void startNewGame(Stage stage, GameScreen gameScreen) {
         stopCurrentGame();
+        // Disable buttons to prevent rapid clicks during setup
+        Platform.runLater(() -> {
+            gameScreen.getNewGameButton().setDisable(true);
+            gameScreen.getMainMenuButton().setDisable(true);
+            System.out.println("Buttons disabled at " + System.currentTimeMillis());
+        });
+
         gameIO = new JavaFXGameIO(
             stage,
             gameScreen.getBoardGrid(),
             gameScreen.getMessageArea(),
             gameScreen.getControlPanel(),
             () -> switchScene(stage, welcomeScene));
-        GameManager gameManager = new GameManager(gameIO);
-        gameTask = new Task<Void>() {
-            @Override
-            protected Void call() {
-                gameManager.startNewGame();
-                return null;
-            }
+        gameManager = new GameManager(gameIO);
+        gameService = new GameService(gameManager);
 
-            @Override
-            protected void failed() {
+        // Set up listeners to manage button states with debugging
+        gameService.setOnRunning(e -> {
+            System.out.println("GameService running at " + System.currentTimeMillis());
+        });
+
+        gameService.setOnSucceeded(e -> {
+            Platform.runLater(() -> {
+                System.out.println("GameService succeeded at " + System.currentTimeMillis());
+                gameScreen.getNewGameButton().setDisable(false);
+                gameScreen.getMainMenuButton().setDisable(false);
+            });
+        });
+
+        gameService.setOnFailed(e -> {
+            Platform.runLater(() -> {
+                System.out.println("GameService failed at " + System.currentTimeMillis() + ": " + gameService.getException().getMessage());
+                gameIO.displayMessage("Game failed: " + gameService.getException().getMessage());
+                gameIO.reset();
+                gameScreen.getNewGameButton().setDisable(false);
+                gameScreen.getMainMenuButton().setDisable(false);
+            });
+            gameService.getException().printStackTrace();
+        });
+
+        gameService.setOnCancelled(e -> {
+            Platform.runLater(() -> {
+                System.out.println("GameService cancelled at " + System.currentTimeMillis());
+                gameIO.reset();
+                gameScreen.getNewGameButton().setDisable(false);
+                gameScreen.getMainMenuButton().setDisable(false);
+            });
+        });
+
+        // Fallback: Re-enable buttons if service fails to start
+        gameService.setOnScheduled(e -> {
+            if (!gameService.isRunning()) {
                 Platform.runLater(() -> {
-                    gameIO.displayMessage("Game failed: " + getException().getMessage());
-                    gameIO.reset();
+                    System.out.println("GameService not running after scheduling at " + System.currentTimeMillis());
+                    gameScreen.getNewGameButton().setDisable(false);
+                    gameScreen.getMainMenuButton().setDisable(false);
                 });
             }
+        });
 
-            @Override
-            protected void cancelled() {
-                Platform.runLater(() -> gameIO.reset());
-            }
-        };
-        gameTask.setOnFailed(e -> gameTask.getException().printStackTrace());
-        new Thread(gameTask).start();
+        gameService.start();
     }
 
     private void stopCurrentGame() {
-        if (gameTask != null && !gameTask.isDone()) {
-            gameTask.cancel();
-            try {
-                gameTask.get(); // Wait for cancellation to complete
-            } catch (Exception e) {
-                // Ignore, as cancellation is expected
+        if (gameService != null && gameService.isRunning()) {
+            gameService.cancel();
+            if (gameManager != null) {
+                gameManager.getIsGameCancelled().set(true);
             }
         }
-        gameTask = null;
+        gameService = null;
     }
 
     private void switchScene(Stage stage, Scene newScene) {

@@ -20,4 +20,6 @@ public interface GameIO {
     CompletableFuture<Void> displayGameEndMessage(String message, MessageArea.MessageType type);
     CompletableFuture<Void> displayGameFinished(int evaluationResult);
     CompletableFuture<Void> displayGameEndError(MoveResult result, Direction direction, int length, int failureY, int failureX);
+
+    void reset();
 }
