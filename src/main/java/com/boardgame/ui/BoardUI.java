@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CancellationException;
 
 public class BoardUI {
     private final GridPane gridPane;
@@ -99,8 +98,7 @@ public class BoardUI {
         });
     }
 
-    public CompletableFuture<List<int[]>> promptBlackSquares() {
-        blackSquaresFuture = new CompletableFuture<>();
+    public void promptBlackSquares() { // Changed to void
         Platform.runLater(() -> {
             blackSquares.clear();
             currentMode = InteractionMode.PLACING_BLACK_SQUARES;
@@ -134,23 +132,19 @@ public class BoardUI {
                 }
             }
         });
-        return blackSquaresFuture;
+    }
+
+    public List<int[]> getBlackSquares() {
+        return new ArrayList<>(blackSquares); // Return a copy to prevent external modification
     }
 
     public void completeBlackSquaresPrompt() {
         Platform.runLater(() -> {
-            if (gameManager.getIsGameCancelled().get()) {
-                blackSquaresFuture.complete(null);
-                return;
-            }
             currentMode = InteractionMode.NONE;
             for (int i = 0; i < rows; i++) {
                 for (int j = 0; j < columns; j++) {
                     cells[i][j].setOnMouseClicked(null);
                 }
-            }
-            if (blackSquaresFuture != null && !blackSquaresFuture.isDone()) {
-                blackSquaresFuture.complete(new ArrayList<>(blackSquares));
             }
         });
     }

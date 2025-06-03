@@ -17,6 +17,7 @@ import javafx.stage.Stage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 public class JavaFXGameIO implements GameIO {
     private final Stage primaryStage;
@@ -55,8 +56,7 @@ public class JavaFXGameIO implements GameIO {
     }
 
     @Override
-    public int[] promptBoardSize() {
-        CompletableFuture<int[]> future = new CompletableFuture<>();
+    public void promptBoardSize(Consumer<int[]> callback) {
         Platform.runLater(() -> {
             controlPanel.getChildren().clear();
             TabPane tabPane = new TabPane();
@@ -81,7 +81,7 @@ public class JavaFXGameIO implements GameIO {
 
             submitButton.setOnAction(e -> {
                 if (gameManager.getIsGameCancelled().get()) {
-                    future.complete(null);
+                    callback.accept(null);
                     return;
                 }
                 try {
@@ -94,24 +94,24 @@ public class JavaFXGameIO implements GameIO {
                         this.columns = cols;
                         this.boardUI = new BoardUI(primaryStage, boardGrid, messageArea, rows, cols, gameManager);
                         System.out.println("BoardUI initialized with size " + rows + "x" + cols);
-                        future.complete(new int[]{rows, cols});
+                        Platform.runLater(() -> controlPanel.getChildren().clear()); // Ensure UI update on JavaFX thread
+                        callback.accept(new int[]{rows, cols});
                     }
                 } catch (NumberFormatException ex) {
                     messageArea.updateMessage("Please enter valid integers.", MessageArea.MessageType.ERROR);
                 }
             });
         });
-        return future.join();
     }
 
     @Override
-    public List<int[]> promptBlackSquares(int rows, int columns) {
+    public void promptBlackSquares(int rows, int columns, Consumer<List<int[]>> callback) {
         if (boardUI == null) {
             System.err.println("Error: BoardUI not initialized");
-            messageArea.updateMessage("Error: Board not initialized. Please set board size first.", MessageArea.MessageType.ERROR);
-            return new ArrayList<>();
+            Platform.runLater(() -> messageArea.updateMessage("Error: Board not initialized.", MessageArea.MessageType.ERROR));
+            callback.accept(null);
+            return;
         }
-        CompletableFuture<List<int[]>> future = boardUI.promptBlackSquares();
         Platform.runLater(() -> {
             controlPanel.getChildren().clear();
             TabPane tabPane = new TabPane();
@@ -128,16 +128,20 @@ public class JavaFXGameIO implements GameIO {
             tabPane.getTabs().add(blackTab);
             controlPanel.getChildren().add(tabPane);
 
+            // Start black square selection
+            boardUI.promptBlackSquares(); // Modified to prepare UI without CompletableFuture
             confirmButton.setOnAction(e -> {
                 if (gameManager.getIsGameCancelled().get()) {
-                    future.complete(null);
+                    callback.accept(null);
                     return;
                 }
                 System.out.println("Confirm button clicked for black squares");
-                boardUI.completeBlackSquaresPrompt();
+                List<int[]> selectedSquares = boardUI.getBlackSquares(); // New method to get current black squares
+                boardUI.completeBlackSquaresPrompt(); // Clear event handlers
+                Platform.runLater(() -> controlPanel.getChildren().clear());
+                callback.accept(selectedSquares);
             });
         });
-        return future.join();
     }
 
     @Override

@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+
 
 public class GameManager {
     private final GameIO gameIO;
@@ -25,7 +27,7 @@ public class GameManager {
         this.blackSquares = new ArrayList<>();
         this.logic = new GameLogic();
         this.isGameCancelled = new AtomicBoolean(false);
-        reset(true); // Initialize to WELCOME
+        reset(true);
     }
 
     public void reset(boolean toWelcome) {
@@ -33,7 +35,7 @@ public class GameManager {
         rows = 0;
         columns = 0;
         blackSquares.clear();
-        currentScreenState = toWelcome ? ScreenState.WELCOME : ScreenState.SETUP_BOARD; // Updated to ScreenState
+        currentScreenState = toWelcome ? ScreenState.WELCOME : ScreenState.SETUP_BOARD;
         currentBoardState = null;
         gameIO.reset();
     }
@@ -44,34 +46,40 @@ public class GameManager {
 
     public void startNewGame() {
         if (isGameCancelled.get()) return;
-        currentScreenState = ScreenState.SETUP_BOARD; // Updated to ScreenState
-        this.reset(false); // Reset to SETUP_BOARD for new game
+        reset(false);
         gameIO.displayMessage("== Java program started ==");
-        BoardState state = setupGame();
-        if (state != null && !isGameCancelled.get()) {
-            currentBoardState = state;
-            currentScreenState = ScreenState.PLAYING; // Updated to ScreenState
-            runGameLoop(currentBoardState); // Use currentBoardState
-        }
+        setupBoardSize();
     }
 
-    private BoardState setupGame() {
-        if (isGameCancelled.get()) return null;
-        currentScreenState = ScreenState.SETUP_BOARD; // Updated to ScreenState
-        int[] size = gameIO.promptBoardSize();
-        if (isGameCancelled.get()) return null;
-        rows = size[0];
-        columns = size[1];
-        currentScreenState = ScreenState.SETUP_BLACK_SQUARES; // Updated to ScreenState
-        try {
-            blackSquares = gameIO.promptBlackSquares(rows, columns);
-        } catch (CancellationException e) {
-            System.out.println("Black squares prompt cancelled: " + e.getMessage());
-            return null;
+    private void setupBoardSize() {
+        if (isGameCancelled.get()) return;
+        currentScreenState = ScreenState.SETUP_BOARD;
+        gameIO.promptBoardSize(size -> {
+            if (isGameCancelled.get() || size == null) return;
+            rows = size[0];
+            columns = size[1];
+            setupBlackSquares();
+        });
+    }
+
+    private void setupBlackSquares() {
+        if (isGameCancelled.get()) return;
+        currentScreenState = ScreenState.SETUP_BLACK_SQUARES;
+        gameIO.promptBlackSquares(rows, columns, squares -> {
+            if (isGameCancelled.get() || squares == null) return;
+            blackSquares = squares;
+            setupPlayerPositions();
+        });
+    }
+
+    private void setupPlayerPositions() {
+        if (isGameCancelled.get()) return;
+        currentScreenState = ScreenState.SETUP_PLAYERS;
+        currentBoardState = promptPlayerPositionsAndInitBoard();
+        if (currentBoardState != null && !isGameCancelled.get()) {
+            currentScreenState = ScreenState.PLAYING;
+            runGameLoop(currentBoardState);
         }
-        if (isGameCancelled.get()) return null;
-        currentScreenState = ScreenState.SETUP_PLAYERS; // Updated to ScreenState
-        return promptPlayerPositionsAndInitBoard();
     }
 
     private BoardState promptPlayerPositionsAndInitBoard() {

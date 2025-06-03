@@ -1,17 +1,18 @@
 package com.boardgame.io;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import com.boardgame.ui.MessageArea;
 import com.boardgame.logic.BoardState;
 import com.boardgame.logic.Direction;
 import com.boardgame.logic.MoveResult;
 import com.boardgame.logic.Pair;
+import com.boardgame.ui.MessageArea;
+import java.util.List;
+import java.util.function.Consumer;
 
 public interface GameIO {
-    int[] promptBoardSize();
-    List<int[]> promptBlackSquares(int rows, int columns);
-    int[][] promptPlayerPositions(int rows, int columns);
+    void promptBoardSize(Consumer<int[]> callback);
+    void promptBlackSquares(int rows, int columns, Consumer<List<int[]>> callback);
+    int[][] promptPlayerPositions(int rows, int columns); // Unchanged for now
     Pair<Direction, Integer> promptPlayerMove();
     boolean promptPlayAgain();
     void displayMessage(String message);
@@ -20,6 +21,5 @@ public interface GameIO {
     CompletableFuture<Void> displayGameEndMessage(String message, MessageArea.MessageType type);
     CompletableFuture<Void> displayGameFinished(int evaluationResult);
     CompletableFuture<Void> displayGameEndError(MoveResult result, Direction direction, int length, int failureY, int failureX);
-
     void reset();
 }
