@@ -145,13 +145,13 @@ public class JavaFXGameIO implements GameIO {
     }
 
     @Override
-    public int[][] promptPlayerPositions(int rows, int columns) {
+    public void promptPlayerPositions(int rows, int columns, Consumer<int[][]> callback) {
         if (boardUI == null) {
             System.err.println("Error: BoardUI not initialized");
             messageArea.updateMessage("Error: Board not initialized. Please set board size first.", MessageArea.MessageType.ERROR);
-            return new int[][]{{-1, -1}, {-1, -1}};
+            callback.accept(null);
+            return;
         }
-        CompletableFuture<int[][]> future = boardUI.promptPlayerPositions();
         Platform.runLater(() -> {
             controlPanel.getChildren().clear();
             TabPane tabPane = new TabPane();
@@ -167,21 +167,22 @@ public class JavaFXGameIO implements GameIO {
             tabPane.getTabs().add(posTab);
             controlPanel.getChildren().add(tabPane);
 
+            boardUI.promptPlayerPositions(callback);
             confirmButton.setOnAction(e -> {
                 if (gameManager.getIsGameCancelled().get()) {
-                    future.complete(null);
+                    callback.accept(null);
                     return;
                 }
-                System.out.println("Confirm button clicked for player positions");
-                int[][] positions = boardUI.promptPlayerPositions().join();
+                int[][] positions = boardUI.getPlayerPositions();
                 if (positions[0][0] == -1 || positions[1][0] == -1) {
                     messageArea.updateMessage("Please set positions for both players.", MessageArea.MessageType.ERROR);
-                } else {
-                    future.complete(positions);
+                    return;
                 }
+                boardUI.completePlayerPositionsPrompt();
+                Platform.runLater(() -> controlPanel.getChildren().clear());
+                callback.accept(positions);
             });
         });
-        return future.join();
     }
 
     @Override

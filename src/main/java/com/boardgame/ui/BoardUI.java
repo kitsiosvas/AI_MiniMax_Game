@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 public class BoardUI {
     private final GridPane gridPane;
@@ -25,9 +26,10 @@ public class BoardUI {
     private final StackPane[][] cells;
     private final Map<Character, String> stateToStyle;
     private List<int[]> blackSquares;
-    private CompletableFuture<List<int[]>> blackSquaresFuture;
-    private CompletableFuture<int[][]> playerPositionsFuture;
+
     private final GameManager gameManager;
+    private int[] playerA;
+    private int[] playerB;
 
     private enum InteractionMode { NONE, PLACING_BLACK_SQUARES, SETTING_PLAYER_A, SETTING_PLAYER_B }
     private InteractionMode currentMode = InteractionMode.NONE;
@@ -40,6 +42,8 @@ public class BoardUI {
         this.columns = columns;
         this.cells = new StackPane[rows][columns];
         this.blackSquares = new ArrayList<>();
+        this.playerA = new int[]{-1, -1};
+        this.playerB = new int[]{-1, -1};
         this.stateToStyle = new HashMap<>();
         this.gameManager = gameManager;
         initializeStyleMap();
@@ -149,11 +153,10 @@ public class BoardUI {
         });
     }
 
-    public CompletableFuture<int[][]> promptPlayerPositions() {
-        playerPositionsFuture = new CompletableFuture<>();
+    public void promptPlayerPositions(Consumer<int[][]> callback) {
         Platform.runLater(() -> {
-            int[] playerA = {-1, -1};
-            int[] playerB = {-1, -1};
+            playerA[0] = -1; playerA[1] = -1;
+            playerB[0] = -1; playerB[1] = -1;
             currentMode = InteractionMode.SETTING_PLAYER_A;
             messageArea.updateMessage("Click to set Player A (red).", MessageArea.MessageType.NEUTRAL);
 
@@ -163,7 +166,7 @@ public class BoardUI {
                     StackPane cell = cells[i][j];
                     cell.setOnMouseClicked(null);
                     cell.setOnMouseClicked(e -> {
-                        if (gameManager.getIsGameCancelled().get()) {
+                        if (gameManager.getIsGameCancelled().get() || currentMode == InteractionMode.NONE) {
                             return;
                         }
                         Platform.runLater(() -> {
@@ -205,23 +208,28 @@ public class BoardUI {
                                 rect.getStyleClass().clear();
                                 rect.getStyleClass().add("cell");
                                 rect.getStyleClass().add("player-b");
-                                currentMode = InteractionMode.NONE;
-                                for (int k = 0; k < rows; k++) {
-                                    for (int l = 0; l < columns; l++) {
-                                        cells[k][l].setOnMouseClicked(null);
-                                    }
-                                }
-                                if (!playerPositionsFuture.isDone()) {
-                                    playerPositionsFuture.complete(new int[][]{{playerA[0], playerA[1]}, {playerB[0], playerB[1]}});
-                                }
+                                messageArea.updateMessage("Confirm player positions.", MessageArea.MessageType.NEUTRAL);
                             }
                         });
                     });
                 }
             }
-            playerPositionsFuture.completeOnTimeout(new int[][]{{playerA[0], playerA[1]}, {playerB[0], playerB[1]}}, 60000, java.util.concurrent.TimeUnit.MILLISECONDS);
         });
-        return playerPositionsFuture;
+    }
+
+    public int[][] getPlayerPositions() {
+        return new int[][]{{playerA[0], playerA[1]}, {playerB[0], playerB[1]}};
+    }
+
+    public void completePlayerPositionsPrompt() {
+        Platform.runLater(() -> {
+            currentMode = InteractionMode.NONE;
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < columns; j++) {
+                    cells[i][j].setOnMouseClicked(null);
+                }
+            }
+        });
     }
 
     public void cancelPrompts() {
@@ -233,17 +241,7 @@ public class BoardUI {
                 }
             }
             clearBoard();
-            if (blackSquaresFuture != null && !blackSquaresFuture.isDone()) {
-                blackSquaresFuture.complete(null);
-            }
-            if (playerPositionsFuture != null && !playerPositionsFuture.isDone()) {
-                playerPositionsFuture.complete(null);
-            }
         });
-    }
-
-    public void highlightCells(int screenSize) {
-        // Placeholder for future valid move highlighting
     }
 
     public void clearBoard() {
@@ -257,17 +255,16 @@ public class BoardUI {
                 }
             }
             blackSquares.clear();
+            playerA[0] = -1;
+            playerA[1] = -1;
+            playerB[0] = -1;
+            playerB[1] = -1;
             currentMode = InteractionMode.NONE;
-            if (blackSquaresFuture != null && !blackSquaresFuture.isDone()) {
-                blackSquaresFuture.complete(null);
-            }
-            if (playerPositionsFuture != null && !playerPositionsFuture.isDone()) {
-                playerPositionsFuture.complete(null);
-            }
         });
     }
 
-    public CompletableFuture<Pair<Direction, Integer>> promptPlayerMove() {
-        return new CompletableFuture<>();
+    public void highlightCells(int screenSize) {
+        // Placeholder for future valid move highlighting
     }
+
 }

@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 public interface GameIO {
     void promptBoardSize(Consumer<int[]> callback);
     void promptBlackSquares(int rows, int columns, Consumer<List<int[]>> callback);
-    int[][] promptPlayerPositions(int rows, int columns); // Unchanged for now
+    void promptPlayerPositions(int rows, int columns, Consumer<int[][]> callback);
     Pair<Direction, Integer> promptPlayerMove();
     boolean promptPlayAgain();
     void displayMessage(String message);

@@ -75,28 +75,37 @@ public class GameManager {
     private void setupPlayerPositions() {
         if (isGameCancelled.get()) return;
         currentScreenState = ScreenState.SETUP_PLAYERS;
-        currentBoardState = promptPlayerPositionsAndInitBoard();
-        if (currentBoardState != null && !isGameCancelled.get()) {
+        promptPlayerPositionsAndInitBoard(boardState -> {
+            if (isGameCancelled.get() || boardState == null) return;
+            currentBoardState = boardState;
             currentScreenState = ScreenState.PLAYING;
             runGameLoop(currentBoardState);
-        }
+        });
     }
 
-    private BoardState promptPlayerPositionsAndInitBoard() {
-        int[][] positions = gameIO.promptPlayerPositions(rows, columns);
-        if (isGameCancelled.get()) return null;
-        char[][] board = new char[rows][columns];
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < columns; j++) {
-                board[i][j] = ' ';
+    private void promptPlayerPositionsAndInitBoard(Consumer<BoardState> callback) {
+        if (isGameCancelled.get()) {
+            callback.accept(null);
+            return;
+        }
+        gameIO.promptPlayerPositions(rows, columns, positions -> {
+            if (isGameCancelled.get() || positions == null) {
+                callback.accept(null);
+                return;
             }
-        }
-        for (int[] pos : blackSquares) {
-            board[pos[0]][pos[1]] = '*';
-        }
-        board[positions[0][0]][positions[0][1]] = 'A';
-        board[positions[1][0]][positions[1][1]] = 'B';
-        return new BoardState(board);
+            char[][] board = new char[rows][columns];
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < columns; j++) {
+                    board[i][j] = ' ';
+                }
+            }
+            for (int[] pos : blackSquares) {
+                board[pos[0]][pos[1]] = '*';
+            }
+            board[positions[0][0]][positions[0][1]] = 'A';
+            board[positions[1][0]][positions[1][1]] = 'B';
+            callback.accept(new BoardState(board));
+        });
     }
 
     private void runGameLoop(BoardState boardState) {
